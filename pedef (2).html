@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedef — PDF Toolkit</title>
+
+<!-- Font options -->
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<style>
+/* ===================== THEME VARIABLES ===================== */
+[data-theme="dark"] {
+  --bg:       #0e0e12;
+  --bg2:      #16161d;
+  --bg3:      #1e1e28;
+  --bg4:      #26263280;
+  --border:   #2c2c3e;
+  --border2:  #3e3e55;
+  --text:     #eeeef5;
+  --text2:    #8888aa;
+  --text3:    #44445566;
+  --accent:   #7c6aff;
+  --accent2:  #a99fff;
+  --accentbg: rgba(124,106,255,.12);
+  --success:  #3dd68c;
+  --danger:   #ff6b6b;
+  --warn:     #fbbf24;
+  --shadow:   0 8px 40px rgba(0,0,0,.5);
+  --sidebar-bg: #111118;
+  --header-bg:  rgba(14,14,18,.9);
+}
+[data-theme="light"] {
+  --bg:       #f4f4f8;
+  --bg2:      #ffffff;
+  --bg3:      #ebebf3;
+  --bg4:      #e0e0ea80;
+  --border:   #d8d8e8;
+  --border2:  #b8b8cc;
+  --text:     #18182a;
+  --text2:    #6666888;
+  --text3:    #aaaacc;
+  --accent:   #6254e8;
+  --accent2:  #4a3fd4;
+  --accentbg: rgba(98,84,232,.1);
+  --success:  #22c55e;
+  --danger:   #ef4444;
+  --warn:     #f59e0b;
+  --shadow:   0 4px 24px rgba(0,0,0,.1);
+  --sidebar-bg: #ebebf3;
+  --header-bg:  rgba(244,244,248,.9);
+}
+
+/* ===================== FONT TOKENS ===================== */
+.font-jakarta  { --ff: 'Plus Jakarta Sans', sans-serif; --ffmono: 'DM Mono', monospace; }
+.font-outfit   { --ff: 'Outfit', sans-serif;            --ffmono: 'DM Mono', monospace; }
+.font-fraunces { --ff: 'Fraunces', serif;               --ffmono: 'DM Mono', monospace; }
+.font-dmsans   { --ff: 'DM Sans', sans-serif;           --ffmono: 'DM Mono', monospace; }
+.font-unbounded{ --ff: 'Unbounded', sans-serif;         --ffmono: 'DM Mono', monospace; }
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { font-size:15px; }
+
+body {
+  font-family: var(--ff, 'Plus Jakarta Sans', sans-serif);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background .3s, color .3s;
+}
+
+/* ===================== HEADER ===================== */
+header {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--header-bg);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  height: 54px;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;
+  user-select: none;
+}
+.logo-badge {
+  background: linear-gradient(135deg, var(--accent), #c084fc);
+  color: #fff; font-size: .6rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 4px; letter-spacing: .5px;
+  font-family: var(--ffmono, 'DM Mono', monospace);
+}
+
+.header-controls { display: flex; align-items: center; gap: 8px; }
+
+/* Theme toggle */
+.theme-btn {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg3);
+  cursor: pointer; font-size: 1rem;
+  transition: all .2s;
+}
+.theme-btn:hover { border-color: var(--accent); }
+
+/* Font picker */
+.font-picker {
+  position: relative;
+}
+.font-picker-btn {
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg3);
+  color: var(--text2);
+  padding: 0 10px;
+  height: 34px;
+  font-size: .78rem; font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  font-family: inherit;
+}
+.font-picker-btn:hover { border-color: var(--accent); color: var(--text); }
+
+.font-dropdown {
+  display: none; position: absolute; top: calc(100% + 6px); right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+  box-shadow: var(--shadow);
+  z-index: 999; min-width: 200px;
+}
+.font-dropdown.open { display: block; }
+.font-option {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  font-size: .85rem; cursor: pointer;
+  transition: background .15s;
+  border-bottom: 1px solid var(--border);
+}
+.font-option:last-child { border-bottom: none; }
+.font-option:hover { background: var(--bg3); }
+.font-option.active { color: var(--accent); }
+.font-option-preview { font-size: .7rem; color: var(--text2); }
+
+/* Lang toggle */
+.lang-toggle {
+  display: flex;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.lang-btn {
+  padding: 0 12px; height: 34px;
+  font-family: inherit; font-size: .78rem; font-weight: 700;
+  border: none; background: transparent; color: var(--text2);
+  cursor: pointer; transition: all .2s;
+}
+.lang-btn.active { background: var(--accent); color: #fff; }
+
+/* ===================== APP LAYOUT ===================== */
+.app {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ===================== SIDEBAR ===================== */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+  transition: background .3s;
+}
+
+.sidebar-section-label {
+  font-size: .65rem; font-weight: 700; letter-spacing: 1.2px;
+  color: var(--text3); text-transform: uppercase;
+  padding: 18px 16px 6px;
+}
+
+.tool-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px;
+  font-family: inherit; font-size: .82rem; font-weight: 600;
+  color: var(--text2);
+  background: transparent; border: none; cursor: pointer;
+  transition: all .15s; text-align: left;
+  border-radius: 0;
+  position: relative;
+}
+.tool-btn:hover { color: var(--text); background: var(--bg4); }
+.tool-btn.active {
+  color: var(--accent);
+  background: var(--accentbg);
+}
+.tool-btn.active::before {
+  content: '';
+  position: absolute; left: 0; top: 4px; bottom: 4px;
+  width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+.tool-icon { font-size: 1rem; flex-shrink: 0; }
+
+.sidebar-upload-area {
+  margin: 12px; margin-top: auto;
+  border: 1.5px dashed var(--border2);
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  cursor: pointer; position: relative;
+  transition: all .2s;
+  background: var(--bg4);
+}
+.sidebar-upload-area:hover, .sidebar-upload-area.drag-over {
+  border-color: var(--accent); background: var(--accentbg);
+}
+.sidebar-upload-area input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer;
+}
+.sidebar-upload-icon { font-size: 1.5rem; margin-bottom: 6px; display: block; }
+.sidebar-upload-text { font-size: .75rem; font-weight: 600; color: var(--text2); line-height: 1.4; }
+.sidebar-upload-sub { font-size: .68rem; color: var(--text3); margin-top: 2px; }
+
+.loaded-file-badge {
+  margin: 8px 12px 12px;
+  background: var(--accentbg);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: .72rem;
+  display: none;
+}
+.loaded-file-badge.show { display: block; }
+.loaded-file-name {
+  font-weight: 700; color: var(--accent2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.loaded-file-meta { color: var(--text2); margin-top: 2px; font-family: var(--ffmono); }
+.loaded-file-clear {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; font-size: .7rem; color: var(--danger);
+  background: none; border: none; cursor: pointer; font-family: inherit; font-weight: 600;
+}
+
+/* ===================== MAIN CONTENT ===================== */
+.main {
+  flex: 1; overflow-y: auto; padding: 28px;
+  min-width: 0;
+}
+
+/* Empty state */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; min-height: 400px; text-align: center; gap: 16px;
+}
+.empty-icon { font-size: 4rem; opacity: .25; }
+.empty-title { font-size: 1.4rem; font-weight: 800; opacity: .4; }
+.empty-sub { font-size: .83rem; color: var(--text2); max-width: 300px; line-height: 1.6; }
+
+/* Tool panels */
+.tool-panel { display: none; animation: fadeUp .2s ease; }
+.tool-panel.active { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.panel-header { margin-bottom: 24px; }
+.panel-title { font-size: 1.5rem; font-weight: 800; letter-spacing: -.5px; }
+.panel-sub { font-size: .82rem; color: var(--text2); margin-top: 4px; font-family: var(--ffmono); }
+
+/* Cards */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  margin-bottom: 16px;
+}
+
+/* File list in sidebar upload context — for multi-file tools */
+.file-list { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+.file-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px;
+  transition: all .15s;
+}
+.file-item.dragging { opacity: .35; }
+.file-item.drag-target { border-color: var(--accent); }
+.drag-handle { cursor: grab; color: var(--text3); flex-shrink: 0; }
+.file-icon-sm { font-size: 1rem; flex-shrink: 0; }
+.file-info { flex: 1; min-width: 0; }
+.file-name-sm { font-size: .8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-size-sm { font-size: .7rem; color: var(--text2); font-family: var(--ffmono); }
+.icon-btn {
+  width: 26px; height: 26px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 6px; background: var(--bg4);
+  color: var(--text2); cursor: pointer; font-size: .8rem;
+  transition: all .15s;
+}
+.icon-btn:hover { background: var(--danger); color: #fff; }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border2); border-radius: 10px;
+  padding: 32px 20px; text-align: center; cursor: pointer;
+  transition: all .2s; background: var(--bg3); position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: var(--accentbg); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop-icon { font-size: 2rem; display: block; margin-bottom: 8px; }
+.drop-title { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+.drop-sub { font-size: .75rem; color: var(--text2); font-family: var(--ffmono); }
+
+/* Options grid */
+.opts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+.opt-group { display: flex; flex-direction: column; gap: 5px; }
+.opt-label { font-size: .7rem; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--text2); }
+.opt-input, .opt-select {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px;
+  color: var(--text); font-family: inherit; font-size: .83rem;
+  outline: none; transition: border-color .2s; width: 100%;
+}
+.opt-input:focus, .opt-select:focus { border-color: var(--accent); }
+.opt-select option { background: var(--bg3); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 20px; border: none; border-radius: 8px;
+  font-family: inherit; font-size: .83rem; font-weight: 700;
+  cursor: pointer; transition: all .18s; white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 3px 16px rgba(124,106,255,.35);
+}
+.btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; filter: none; }
+.btn-secondary {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2);
+}
+.btn-secondary:hover { border-color: var(--border2); color: var(--text); }
+.btn-ghost { background: transparent; color: var(--text2); }
+.btn-ghost:hover { color: var(--danger); }
+
+.action-bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 16px; }
+
+/* Progress */
+.progress-wrap { display: none; margin-top: 14px; }
+.progress-wrap.show { display: block; }
+.progress-label { font-size: .75rem; color: var(--text2); margin-bottom: 6px; font-family: var(--ffmono); }
+.progress-bg { height: 5px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), #c084fc); width: 0%; transition: width .3s ease; }
+
+/* Toast */
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  display: flex; align-items: center; gap: 9px;
+  padding: 12px 16px; border-radius: 9px;
+  font-size: .82rem; font-weight: 600;
+  animation: toastIn .2s ease; max-width: 320px;
+}
+.toast.success { background: rgba(61,214,140,.12); border: 1px solid rgba(61,214,140,.3); color: var(--success); }
+.toast.error   { background: rgba(255,107,107,.12); border: 1px solid rgba(255,107,107,.3); color: var(--danger); }
+.toast.info    { background: var(--accentbg); border: 1px solid rgba(124,106,255,.3); color: var(--accent2); }
+@keyframes toastIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+
+/* Page thumbnails grid */
+.thumb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 14px; }
+.page-thumb {
+  position: relative; border: 2px solid var(--border);
+  border-radius: 8px; overflow: hidden; cursor: pointer;
+  transition: all .18s; aspect-ratio: .707; background: var(--bg3);
+}
+.page-thumb img, .page-thumb canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
+.page-thumb:hover { border-color: var(--accent2); }
+.page-thumb.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,106,255,.3); }
+.page-thumb.marked { border-color: var(--danger); opacity: .55; }
+.page-num-badge {
+  position: absolute; bottom: 3px; right: 5px;
+  font-size: .65rem; font-family: var(--ffmono);
+  background: rgba(0,0,0,.55); color: #fff;
+  padding: 1px 5px; border-radius: 4px;
+}
+.page-mark-label {
+  display: none; position: absolute; top: 3px; left: 3px;
+  font-size: .6rem; font-weight: 800; background: var(--danger);
+  color: #fff; padding: 2px 5px; border-radius: 4px;
+}
+.page-thumb.marked .page-mark-label { display: block; }
+.thumb-drag-handle {
+  position: absolute; top: 3px; right: 4px;
+  background: rgba(0,0,0,.45); color: #ddd;
+  font-size: .75rem; padding: 1px 4px; border-radius: 4px; cursor: grab;
+}
+
+/* Rotate item */
+.rotate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 14px; }
+.rotate-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.rotate-thumb { width: 70px; height: 99px; background: var(--bg4); border-radius: 4px; overflow: hidden; transition: transform .3s ease; border: 1px solid var(--border); }
+.rotate-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.rotate-meta { font-size: .7rem; font-family: var(--ffmono); color: var(--text2); }
+.rotate-btns { display: flex; gap: 5px; }
+
+/* Range tags */
+.range-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--accentbg); border: 1px solid rgba(124,106,255,.3);
+  color: var(--accent2); padding: 3px 9px; border-radius: 6px;
+  font-size: .75rem; font-family: var(--ffmono);
+}
+.range-tag button { background: none; border: none; color: var(--accent2); cursor: pointer; font-size: .9rem; line-height: 1; }
+
+/* Quality slider */
+.quality-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px; border-radius: 99px; outline: none;
+  background: linear-gradient(90deg, var(--accent) var(--val, 70%), var(--bg4) var(--val, 70%));
+}
+.quality-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--accent);
+  cursor: pointer; border: 2px solid var(--bg);
+  box-shadow: 0 0 6px rgba(124,106,255,.5);
+}
+
+/* Watermark preview */
+.wm-preview {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 28px 20px; text-align: center;
+  font-weight: 800; letter-spacing: 2px; margin-top: 14px;
+  min-height: 90px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* Signature */
+.sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.sig-pdf-wrap {
+  position: relative; display: inline-block;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  max-width: 100%;
+}
+.sig-pdf-canvas { display: block; max-width: 100%; }
+.sig-stamp {
+  position: absolute; cursor: move; user-select: none;
+  border: 2px dashed rgba(124,106,255,.7); border-radius: 4px;
+}
+.sig-stamp img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sig-resize {
+  position: absolute; bottom: -5px; right: -5px;
+  width: 12px; height: 12px;
+  background: var(--accent); border-radius: 2px; cursor: se-resize;
+}
+.sig-bg-checker {
+  background: repeating-conic-gradient(var(--bg3) 0% 25%, var(--bg4) 0% 50%) 0 0 / 16px 16px;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; margin-top: 8px; display: flex; justify-content: center;
+}
+.sig-bg-checker img { max-height: 100px; object-fit: contain; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Responsive */
+@media (max-width:640px) {
+  .sidebar { width: 180px; }
+  .main { padding: 16px; }
+  .sig-grid { grid-template-columns: 1fr; }
+}
+@media (max-width:480px) {
+  .sidebar { display: none; }
+}
+</style>
+<style>
+/* ===== PIPELINE EXTRA STYLES ===== */
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  margin: 10px 12px 6px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mode-tab {
+  flex: 1; padding: 7px 4px;
+  font-family: inherit; font-size: .72rem; font-weight: 700;
+  border: none; background: transparent; color: var(--text2);
+  cursor: pointer; transition: all .15s; text-align: center;
+}
+.mode-tab.active { background: var(--accent); color: #fff; }
+
+/* Pipeline tool picker */
+.pipe-tool-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 16px;
+}
+.pipe-tool-card {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg3); border: 2px solid var(--border);
+  border-radius: 9px; cursor: pointer; transition: all .15s;
+  font-family: inherit; font-size: .82rem; font-weight: 600;
+  color: var(--text2); text-align: left;
+}
+.pipe-tool-card:hover { border-color: var(--border2); color: var(--text); }
+.pipe-tool-card.selected {
+  border-color: var(--accent); color: var(--accent);
+  background: var(--accentbg);
+}
+.pipe-tool-card .ptc-check {
+  margin-left: auto; font-size: .9rem; opacity: 0;
+}
+.pipe-tool-card.selected .ptc-check { opacity: 1; }
+
+/* Pipeline queue */
+.pipe-queue {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-bottom: 20px;
+}
+.pipe-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.pipe-step-num {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent); color: #fff;
+  border-radius: 50%; font-size: .72rem; font-weight: 800;
+}
+.pipe-step-num.done { background: var(--success); }
+.pipe-step-num.active-step { background: var(--warn); color: #000; animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+.pipe-step-icon { font-size: 1rem; }
+.pipe-step-name { font-size: .83rem; font-weight: 700; flex: 1; }
+.pipe-step-status { font-size: .72rem; color: var(--text2); font-family: var(--ffmono); }
+
+/* Pipeline wizard step content */
+.pipe-wizard { display: none; }
+.pipe-wizard.active { display: block; }
+
+.pipe-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.pipe-step-indicator {
+  font-size: .78rem; color: var(--text2); font-family: var(--ffmono);
+}
+.pipe-step-indicator strong { color: var(--accent); }
+
+/* Arrow connector */
+.pipe-arrow {
+  text-align: center; color: var(--text3); font-size: 1rem;
+  margin: 2px 0;
+}
+</style>
+</head>
+<body class="font-jakarta">
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="logo">Pedef <span class="logo-badge">PDF</span></div>
+  <div class="header-controls">
+    <div class="font-picker" id="font-picker">
+      <button class="font-picker-btn" onclick="toggleFontDropdown()">
+        <span>Aa</span> <span id="current-font-label">Jakarta</span> ▾
+      </button>
+      <div class="font-dropdown" id="font-dropdown">
+        <div class="font-option active" onclick="setFont('jakarta','Plus Jakarta Sans','Jakarta')" style="font-family:'Plus Jakarta Sans'"><span>Plus Jakarta Sans</span><span class="font-option-preview">Aa Bb Cc</span></div>
+        <div class="font-option" onclick="setFont('outfit','Outfit','Outfit')" style="font-family:'Outfit'"><span>Outfit</span><span class="font-option-preview">Aa Bb Cc</span></div>
+        <div class="font-option" onclick="setFont('fraunces','Fraunces','Fraunces')" style="font-family:'Fraunces'"><span>Fraunces</span><span class="font-option-preview" style="font-style:italic">Aa Bb Cc</span></div>
+        <div class="font-option" onclick="setFont('dmsans','DM Sans','DM Sans')" style="font-family:'DM Sans'"><span>DM Sans</span><span class="font-option-preview">Aa Bb Cc</span></div>
+        <div class="font-option" onclick="setFont('unbounded','Unbounded','Unbounded')" style="font-family:'Unbounded'"><span>Unbounded</span><span class="font-option-preview">Aa Bb</span></div>
+      </div>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-id" onclick="setLang('id')">ID</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+<!-- ===== SIDEBAR ===== -->
+<aside class="sidebar">
+
+  <!-- Mode tabs -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="mode-single" onclick="setMode('single')" data-i="mode_single">Single</button>
+    <button class="mode-tab" id="mode-pipeline" onclick="setMode('pipeline')" data-i="mode_pipeline">Pipeline</button>
+  </div>
+
+  <!-- SINGLE MODE tools -->
+  <div id="single-tools">
+    <div class="sidebar-section-label" data-i="tools_label">Tools</div>
+    <button class="tool-btn active" onclick="setTool('merge')" id="tool-merge"><span class="tool-icon">🔗</span> <span data-i="tab_merge">Gabung</span></button>
+    <button class="tool-btn" onclick="setTool('split')" id="tool-split"><span class="tool-icon">✂️</span> <span data-i="tab_split">Pisah</span></button>
+    <button class="tool-btn" onclick="setTool('compress')" id="tool-compress"><span class="tool-icon">🗜️</span> <span data-i="tab_compress">Kompres</span></button>
+    <button class="tool-btn" onclick="setTool('rotate')" id="tool-rotate"><span class="tool-icon">🔄</span> <span data-i="tab_rotate">Putar</span></button>
+    <button class="tool-btn" onclick="setTool('delete')" id="tool-delete"><span class="tool-icon">🗑️</span> <span data-i="tab_delete">Hapus Halaman</span></button>
+    <button class="tool-btn" onclick="setTool('reorder')" id="tool-reorder"><span class="tool-icon">↕️</span> <span data-i="tab_reorder">Atur Urutan</span></button>
+    <button class="tool-btn" onclick="setTool('watermark')" id="tool-watermark"><span class="tool-icon">💧</span> <span data-i="tab_watermark">Watermark</span></button>
+    <button class="tool-btn" onclick="setTool('signature')" id="tool-signature"><span class="tool-icon">✍️</span> <span data-i="tab_signature">Tanda Tangan</span></button>
+  </div>
+
+  <!-- PIPELINE MODE tool picker in sidebar -->
+  <div id="pipeline-tools" style="display:none">
+    <div class="sidebar-section-label" data-i="pipe_pick_label">Pilih Tools</div>
+    <div style="padding:0 12px">
+      <div class="pipe-tool-grid">
+        <button class="pipe-tool-card" id="ptc-merge" onclick="togglePipeTool('merge')"><span>🔗</span><span data-i="tab_merge">Gabung</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-compress" onclick="togglePipeTool('compress')"><span>🗜️</span><span data-i="tab_compress">Kompres</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-delete" onclick="togglePipeTool('delete')"><span>🗑️</span><span data-i="tab_delete">Hapus</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-reorder" onclick="togglePipeTool('reorder')"><span>↕️</span><span data-i="tab_reorder">Urutan</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-rotate" onclick="togglePipeTool('rotate')"><span>🔄</span><span data-i="tab_rotate">Putar</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-split" onclick="togglePipeTool('split')"><span>✂️</span><span data-i="tab_split">Pisah</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-watermark" onclick="togglePipeTool('watermark')"><span>💧</span><span data-i="tab_watermark">Watermark</span><span class="ptc-check">✓</span></button>
+        <button class="pipe-tool-card" id="ptc-signature" onclick="togglePipeTool('signature')"><span>✍️</span><span data-i="tab_signature">TTD</span><span class="ptc-check">✓</span></button>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px" onclick="startPipeline()" data-i="btn_start_pipeline">Mulai Pipeline ▶</button>
+    </div>
+  </div>
+
+  <!-- File upload (shared) -->
+  <div style="flex:1"></div>
+  <div style="margin:12px;">
+    <div class="sidebar-section-label" style="padding:0 0 6px" data-i="file_label">File Aktif</div>
+    <div class="sidebar-upload-area" id="sidebar-upload" ondragover="ev(event)" ondrop="dropMain(event)">
+      <input type="file" accept=".pdf" onchange="loadMainFile(this)">
+      <span class="sidebar-upload-icon">📂</span>
+      <div class="sidebar-upload-text" data-i="upload_text">Upload PDF</div>
+      <div class="sidebar-upload-sub" data-i="upload_sub">klik atau seret file</div>
+    </div>
+    <div class="loaded-file-badge" id="loaded-badge">
+      <div class="loaded-file-name" id="loaded-name">—</div>
+      <div class="loaded-file-meta" id="loaded-meta">—</div>
+      <button class="loaded-file-clear" onclick="clearMainFile()">✕ <span data-i="clear_file">Hapus file</span></button>
+    </div>
+  </div>
+</aside>
+
+<!-- ===== MAIN ===== -->
+<main class="main" id="main-area">
+
+  <!-- Empty state -->
+  <div class="empty-state" id="empty-state">
+    <span class="empty-icon">📄</span>
+    <div class="empty-title" data-i="empty_title">Upload PDF dulu</div>
+    <div class="empty-sub" data-i="empty_sub">Upload file PDF lewat sidebar kiri, lalu pilih tool yang ingin digunakan.</div>
+  </div>
+
+  <!-- ===== SINGLE MODE PANELS ===== -->
+  <div id="single-panels">
+
+    <!-- MERGE -->
+    <div class="tool-panel" id="panel-merge">
+      <div class="panel-header">
+        <div class="panel-title" data-i="merge_title">Gabungkan PDF</div>
+        <div class="panel-sub" data-i="merge_sub">Gabungkan beberapa PDF menjadi satu dokumen</div>
+      </div>
+      <div class="card">
+        <div class="drop-zone" ondragover="ev(event)" ondrop="dropMergeExtra(event)">
+          <input type="file" accept=".pdf" multiple onchange="addMergeFiles(this)">
+          <span class="drop-icon">📂</span>
+          <div class="drop-title" data-i="merge_add">Tambah file lain untuk digabung</div>
+          <div class="drop-sub" data-i="drop_sub">klik atau seret file PDF</div>
+        </div>
+        <div class="file-list" id="merge-extra-list"></div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doMerge()">🔗 <span data-i="btn_merge">Gabung & Unduh</span></button>
+          <button class="btn btn-secondary" onclick="clearMergeExtra()">🗑️ <span data-i="btn_clear_extra">Hapus tambahan</span></button>
+        </div>
+        <div class="progress-wrap" id="merge-progress"><div class="progress-label" id="merge-plabel"></div><div class="progress-bg"><div class="progress-bar" id="merge-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- SPLIT -->
+    <div class="tool-panel" id="panel-split">
+      <div class="panel-header">
+        <div class="panel-title" data-i="split_title">Pisahkan PDF</div>
+        <div class="panel-sub" data-i="split_sub">Ekstrak range halaman menjadi file terpisah</div>
+      </div>
+      <div class="card">
+        <div class="opt-group">
+          <div class="opt-label" data-i="split_range_label">Range Halaman</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <input class="opt-input" type="text" id="split-range-input" placeholder="1-3" style="width:100px">
+            <button class="btn btn-secondary" onclick="addRange()" style="padding:8px 14px;font-size:.78rem">+ <span data-i="btn_add_range">Tambah</span></button>
+          </div>
+          <div id="split-range-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+          <div style="font-size:.72rem;color:var(--text2);margin-top:4px;font-family:var(--ffmono)" data-i="split_hint">Contoh: 1-3 atau 5</div>
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doSplit()">✂️ <span data-i="btn_split">Pisah & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="split-progress"><div class="progress-label" id="split-plabel"></div><div class="progress-bg"><div class="progress-bar" id="split-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- COMPRESS -->
+    <div class="tool-panel" id="panel-compress">
+      <div class="panel-header">
+        <div class="panel-title" data-i="compress_title">Kompres PDF</div>
+        <div class="panel-sub" data-i="compress_sub">Kurangi ukuran file PDF</div>
+      </div>
+      <div class="card">
+        <div class="opt-group">
+          <div class="opt-label" data-i="quality_label">Kualitas Gambar</div>
+          <input type="range" class="quality-slider" id="quality-slider" min="10" max="95" value="70" oninput="updateQuality(this)">
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text2);margin-top:4px;font-family:var(--ffmono)">
+            <span data-i="quality_low">Rendah</span><span id="quality-val" style="font-weight:700;color:var(--accent2)">70%</span><span data-i="quality_high">Tinggi</span>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doCompress()">🗜️ <span data-i="btn_compress">Kompres & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="compress-progress"><div class="progress-label" id="compress-plabel"></div><div class="progress-bg"><div class="progress-bar" id="compress-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ROTATE -->
+    <div class="tool-panel" id="panel-rotate">
+      <div class="panel-header">
+        <div class="panel-title" data-i="rotate_title">Putar Halaman</div>
+        <div class="panel-sub" data-i="rotate_sub">Putar halaman individual atau semua sekaligus</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <button class="btn btn-secondary" onclick="rotateAll(-90)" style="font-size:.78rem;padding:7px 12px">↺ <span data-i="all_left">Semua Kiri</span></button>
+          <button class="btn btn-secondary" onclick="rotateAll(90)"  style="font-size:.78rem;padding:7px 12px">↻ <span data-i="all_right">Semua Kanan</span></button>
+          <button class="btn btn-secondary" onclick="rotateAll(180)" style="font-size:.78rem;padding:7px 12px">↕ <span data-i="all_180">Semua 180°</span></button>
+        </div>
+        <div class="rotate-grid" id="rotate-grid"><div style="color:var(--text2);font-size:.8rem;padding:12px 0" data-i="loading_hint">Upload PDF untuk memuat preview…</div></div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doRotate()">🔄 <span data-i="btn_rotate">Terapkan & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="rotate-progress"><div class="progress-label" id="rotate-plabel"></div><div class="progress-bg"><div class="progress-bar" id="rotate-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- DELETE -->
+    <div class="tool-panel" id="panel-delete">
+      <div class="panel-header">
+        <div class="panel-title" data-i="delete_title">Hapus Halaman</div>
+        <div class="panel-sub" data-i="delete_sub">Klik halaman untuk menandai penghapusan</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div style="font-size:.8rem;color:var(--text2)" id="delete-count-label">0 <span data-i="marked">ditandai</span></div>
+          <button class="btn btn-ghost" onclick="clearDeleteMarks()" style="font-size:.78rem;padding:4px 10px" data-i="btn_clear_marks">Batalkan Semua</button>
+        </div>
+        <div class="thumb-grid" id="delete-grid"><div style="color:var(--text2);font-size:.8rem;padding:12px 0" data-i="loading_hint">Upload PDF untuk memuat preview…</div></div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doDeletePages()">🗑️ <span data-i="btn_delete">Hapus & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="delete-progress"><div class="progress-label" id="delete-plabel"></div><div class="progress-bg"><div class="progress-bar" id="delete-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- REORDER -->
+    <div class="tool-panel" id="panel-reorder">
+      <div class="panel-header">
+        <div class="panel-title" data-i="reorder_title">Atur Urutan</div>
+        <div class="panel-sub" data-i="reorder_sub">Seret thumbnail untuk mengubah urutan halaman</div>
+      </div>
+      <div class="card">
+        <div class="thumb-grid" id="reorder-grid"><div style="color:var(--text2);font-size:.8rem;padding:12px 0" data-i="loading_hint">Upload PDF untuk memuat preview…</div></div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doReorder()">↕️ <span data-i="btn_reorder">Simpan & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="reorder-progress"><div class="progress-label" id="reorder-plabel"></div><div class="progress-bg"><div class="progress-bar" id="reorder-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- WATERMARK -->
+    <div class="tool-panel" id="panel-watermark">
+      <div class="panel-header">
+        <div class="panel-title" data-i="watermark_title">Watermark</div>
+        <div class="panel-sub" data-i="watermark_sub">Tambahkan teks watermark ke setiap halaman</div>
+      </div>
+      <div class="card">
+        <div class="opts-grid">
+          <div class="opt-group" style="grid-column:1/-1">
+            <div class="opt-label" data-i="wm_text">Teks</div>
+            <input class="opt-input" type="text" id="wm-text" placeholder="CONFIDENTIAL" oninput="updateWMPreview()">
+          </div>
+          <div class="opt-group"><div class="opt-label" data-i="wm_size">Ukuran Font</div><input class="opt-input" type="number" id="wm-size" value="48" min="12" max="200" oninput="updateWMPreview()"></div>
+          <div class="opt-group"><div class="opt-label" data-i="wm_opacity">Opacity</div><input class="opt-input" type="number" id="wm-opacity" value="0.3" min="0.05" max="1" step="0.05" oninput="updateWMPreview()"></div>
+          <div class="opt-group"><div class="opt-label" data-i="wm_angle">Sudut°</div><input class="opt-input" type="number" id="wm-angle" value="45" min="-180" max="180" oninput="updateWMPreview()"></div>
+          <div class="opt-group"><div class="opt-label" data-i="wm_color">Warna</div><input class="opt-input" type="color" id="wm-color" value="#7c6aff" oninput="updateWMPreview()" style="height:38px;padding:3px"></div>
+        </div>
+        <div class="wm-preview" id="wm-preview">CONFIDENTIAL</div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doWatermark()">💧 <span data-i="btn_watermark">Terapkan & Unduh</span></button>
+        </div>
+        <div class="progress-wrap" id="watermark-progress"><div class="progress-label" id="watermark-plabel"></div><div class="progress-bg"><div class="progress-bar" id="watermark-bar"></div></div></div>
+      </div>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="tool-panel" id="panel-signature">
+      <div class="panel-header">
+        <div class="panel-title" data-i="sig_title">Tanda Tangan</div>
+        <div class="panel-sub" data-i="sig_sub">Upload TTD, background putih dihapus otomatis, seret untuk posisi</div>
+      </div>
+      <div class="card">
+        <div class="sig-grid">
+          <div>
+            <div class="opt-label" style="margin-bottom:6px" data-i="sig_upload_label">Upload Tanda Tangan (JPG/PNG)</div>
+            <div class="drop-zone" style="padding:20px" ondragover="ev(event)" ondrop="dropSigImg(event)">
+              <input type="file" accept="image/*" onchange="loadSigImage(this)">
+              <span class="drop-icon" style="font-size:1.5rem">✍️</span>
+              <div class="drop-sub" data-i="drop_sub">klik atau seret gambar</div>
+            </div>
+            <div class="sig-bg-checker" id="sig-img-preview" style="display:none">
+              <img id="sig-preview-img" src="" alt="signature">
+            </div>
+          </div>
+          <div>
+            <div class="opt-group" style="margin-bottom:10px">
+              <div class="opt-label" data-i="sig_threshold">Ambang Background</div>
+              <input class="opt-input" type="number" id="sig-threshold" value="230" min="100" max="255" oninput="reprocessSig()">
+            </div>
+            <div class="opt-group">
+              <div class="opt-label" data-i="sig_page">Halaman</div>
+              <select class="opt-select" id="sig-page-select" onchange="renderSigPage()"><option value="1">Halaman 1</option></select>
+            </div>
+          </div>
+        </div>
+        <div id="sig-canvas-wrap" style="display:none;overflow:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px">
+          <div style="font-size:.75rem;color:var(--text2);margin-bottom:8px;font-family:var(--ffmono)" data-i="sig_hint">Seret tanda tangan untuk memposisikan. Drag sudut kanan-bawah untuk resize.</div>
+          <div class="sig-pdf-wrap" id="sig-pdf-wrap">
+            <canvas class="sig-pdf-canvas" id="sig-pdf-canvas"></canvas>
+            <div id="sig-stamp-container" style="position:absolute;inset:0;pointer-events:none"></div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <button class="btn btn-primary" onclick="doSignature()">✍️ <span data-i="btn_sig">Terapkan & Unduh</span></button>
+          <button class="btn btn-secondary" onclick="clearSig()">🗑️ <span data-i="btn_clear_sig">Reset TTD</span></button>
+        </div>
+        <div class="progress-wrap" id="signature-progress"><div class="progress-label" id="signature-plabel"></div><div class="progress-bg"><div class="progress-bar" id="signature-bar"></div></div></div>
+      </div>
+    </div>
+
+  </div><!-- /single-panels -->
+
+  <!-- ===== PIPELINE PANEL ===== -->
+  <div id="pipeline-panel" style="display:none">
+
+    <!-- Stage 0: select tools (shown when pipeline not started) -->
+    <div id="pipe-select-stage">
+      <div class="panel-header">
+        <div class="panel-title" data-i="pipe_title">Pipeline</div>
+        <div class="panel-sub" data-i="pipe_sub">Pilih tools di sidebar kiri, lalu klik Mulai Pipeline</div>
+      </div>
+      <div class="card" id="pipe-queue-card" style="display:none">
+        <div class="opt-label" style="margin-bottom:10px" data-i="pipe_order_label">Urutan yang akan dijalankan:</div>
+        <div class="pipe-queue" id="pipe-queue-preview"></div>
+      </div>
+      <div class="card" style="margin-top:0" id="pipe-empty-hint">
+        <div style="text-align:center;padding:24px;color:var(--text2);font-size:.85rem" data-i="pipe_empty_hint">← Pilih minimal satu tool dari sidebar</div>
+      </div>
+    </div>
+
+    <!-- Stage 1+: wizard running -->
+    <div id="pipe-wizard-stage" style="display:none">
+
+      <!-- Progress header -->
+      <div class="panel-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="panel-title" id="pipe-wizard-title">Step 1</div>
+            <div class="panel-sub" id="pipe-wizard-sub"></div>
+          </div>
+          <div class="pipe-step-indicator">
+            Step <strong id="pipe-cur-step">1</strong> / <strong id="pipe-total-steps">1</strong>
+          </div>
+        </div>
+        <!-- Mini queue progress -->
+        <div class="pipe-queue" id="pipe-mini-queue" style="margin-top:14px"></div>
+      </div>
+
+      <!-- Step content containers (reuse single-mode UI logic) -->
+      <div id="pw-merge" class="pipe-wizard">
+        <div class="card">
+          <div class="drop-zone" ondragover="ev(event)" ondrop="dropPipeMerge(event)">
+            <input type="file" accept=".pdf" multiple onchange="addPipeMergeFiles(this)">
+            <span class="drop-icon">📂</span>
+            <div class="drop-title" data-i="merge_add">Tambah file lain untuk digabung</div>
+            <div class="drop-sub" data-i="drop_sub">klik atau seret file PDF</div>
+          </div>
+          <div class="file-list" id="pipe-merge-extra-list"></div>
+        </div>
+      </div>
+
+      <div id="pw-compress" class="pipe-wizard">
+        <div class="card">
+          <div class="opt-group">
+            <div class="opt-label" data-i="quality_label">Kualitas Gambar</div>
+            <input type="range" class="quality-slider" id="pipe-quality-slider" min="10" max="95" value="70" oninput="updatePipeQuality(this)">
+            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text2);margin-top:4px;font-family:var(--ffmono)">
+              <span data-i="quality_low">Rendah</span><span id="pipe-quality-val" style="font-weight:700;color:var(--accent2)">70%</span><span data-i="quality_high">Tinggi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pw-delete" class="pipe-wizard">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+            <div style="font-size:.8rem;color:var(--text2)" id="pipe-delete-count">0 <span data-i="marked">ditandai</span></div>
+            <button class="btn btn-ghost" onclick="clearPipeDeleteMarks()" style="font-size:.78rem;padding:4px 10px" data-i="btn_clear_marks">Batalkan Semua</button>
+          </div>
+          <div class="thumb-grid" id="pipe-delete-grid"></div>
+        </div>
+      </div>
+
+      <div id="pw-reorder" class="pipe-wizard">
+        <div class="card">
+          <div style="font-size:.78rem;color:var(--text2);margin-bottom:8px" data-i="reorder_sub">Seret thumbnail untuk mengubah urutan halaman</div>
+          <div class="thumb-grid" id="pipe-reorder-grid"></div>
+        </div>
+      </div>
+
+      <div id="pw-rotate" class="pipe-wizard">
+        <div class="card">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+            <button class="btn btn-secondary" onclick="rotatePipeAll(-90)" style="font-size:.78rem;padding:7px 12px">↺ <span data-i="all_left">Semua Kiri</span></button>
+            <button class="btn btn-secondary" onclick="rotatePipeAll(90)"  style="font-size:.78rem;padding:7px 12px">↻ <span data-i="all_right">Semua Kanan</span></button>
+            <button class="btn btn-secondary" onclick="rotatePipeAll(180)" style="font-size:.78rem;padding:7px 12px">↕ <span data-i="all_180">180°</span></button>
+          </div>
+          <div class="rotate-grid" id="pipe-rotate-grid"></div>
+        </div>
+      </div>
+
+      <div id="pw-split" class="pipe-wizard">
+        <div class="card">
+          <div class="opt-group">
+            <div class="opt-label" data-i="split_range_label">Range Halaman</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input class="opt-input" type="text" id="pipe-split-input" placeholder="1-3" style="width:100px">
+              <button class="btn btn-secondary" onclick="addPipeRange()" style="padding:8px 14px;font-size:.78rem">+ <span data-i="btn_add_range">Tambah</span></button>
+            </div>
+            <div id="pipe-split-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+            <div style="font-size:.72rem;color:var(--text2);margin-top:4px;font-family:var(--ffmono)" data-i="split_hint">Contoh: 1-3 atau 5</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pw-watermark" class="pipe-wizard">
+        <div class="card">
+          <div class="opts-grid">
+            <div class="opt-group" style="grid-column:1/-1"><div class="opt-label" data-i="wm_text">Teks</div><input class="opt-input" type="text" id="pipe-wm-text" placeholder="CONFIDENTIAL" oninput="updatePipeWM()"></div>
+            <div class="opt-group"><div class="opt-label" data-i="wm_size">Ukuran</div><input class="opt-input" type="number" id="pipe-wm-size" value="48" min="12" max="200" oninput="updatePipeWM()"></div>
+            <div class="opt-group"><div class="opt-label" data-i="wm_opacity">Opacity</div><input class="opt-input" type="number" id="pipe-wm-opacity" value="0.3" min="0.05" max="1" step="0.05" oninput="updatePipeWM()"></div>
+            <div class="opt-group"><div class="opt-label" data-i="wm_angle">Sudut°</div><input class="opt-input" type="number" id="pipe-wm-angle" value="45" min="-180" max="180" oninput="updatePipeWM()"></div>
+            <div class="opt-group"><div class="opt-label" data-i="wm_color">Warna</div><input class="opt-input" type="color" id="pipe-wm-color" value="#7c6aff" oninput="updatePipeWM()" style="height:38px;padding:3px"></div>
+          </div>
+          <div class="wm-preview" id="pipe-wm-preview">CONFIDENTIAL</div>
+        </div>
+      </div>
+
+      <div id="pw-signature" class="pipe-wizard">
+        <div class="card">
+          <div class="sig-grid">
+            <div>
+              <div class="opt-label" style="margin-bottom:6px" data-i="sig_upload_label">Upload Tanda Tangan</div>
+              <div class="drop-zone" style="padding:20px" ondragover="ev(event)" ondrop="dropPipeSigImg(event)">
+                <input type="file" accept="image/*" onchange="loadPipeSigImage(this)">
+                <span class="drop-icon" style="font-size:1.5rem">✍️</span>
+                <div class="drop-sub">klik atau seret gambar</div>
+              </div>
+              <div class="sig-bg-checker" id="pipe-sig-preview" style="display:none">
+                <img id="pipe-sig-preview-img" src="" alt="sig">
+              </div>
+            </div>
+            <div>
+              <div class="opt-group" style="margin-bottom:10px">
+                <div class="opt-label" data-i="sig_threshold">Ambang BG</div>
+                <input class="opt-input" type="number" id="pipe-sig-threshold" value="230" min="100" max="255" oninput="reprocessPipeSig()">
+              </div>
+              <div class="opt-group">
+                <div class="opt-label" data-i="sig_page">Halaman</div>
+                <select class="opt-select" id="pipe-sig-page-select" onchange="renderPipeSigPage()"><option value="1">Halaman 1</option></select>
+              </div>
+            </div>
+          </div>
+          <div id="pipe-sig-canvas-wrap" style="display:none;overflow:auto;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:12px">
+            <div style="font-size:.75rem;color:var(--text2);margin-bottom:8px;font-family:var(--ffmono)" data-i="sig_hint">Seret tanda tangan untuk memposisikan.</div>
+            <div class="sig-pdf-wrap" id="pipe-sig-pdf-wrap">
+              <canvas id="pipe-sig-canvas"></canvas>
+              <div id="pipe-sig-stamp-container" style="position:absolute;inset:0;pointer-events:none"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation buttons -->
+      <div class="pipe-nav" style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="pipePrev()" id="pipe-prev-btn">← <span data-i="btn_prev">Sebelumnya</span></button>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost btn-danger" onclick="cancelPipeline()" style="color:var(--danger)" data-i="btn_cancel_pipe">Batal</button>
+          <button class="btn btn-primary" onclick="pipeNext()" id="pipe-next-btn">
+            <span id="pipe-next-label" data-i="btn_next">Selanjutnya →</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="pipe-progress" style="margin-top:12px">
+        <div class="progress-label" id="pipe-plabel">Memproses...</div>
+        <div class="progress-bg"><div class="progress-bar" id="pipe-bar"></div></div>
+      </div>
+
+    </div><!-- /pipe-wizard-stage -->
+  </div><!-- /pipeline-panel -->
+
+</main>
+</div><!-- /app -->
+
+<div class="toast-container" id="toast-container"></div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ===================== TRANSLATIONS =====================
+const T = {
+  id: {
+    tools_label:'Tools', file_label:'File Aktif', upload_text:'Upload PDF',
+    upload_sub:'klik atau seret file', clear_file:'Hapus file',
+    empty_title:'Upload PDF dulu', empty_sub:'Upload file PDF lewat sidebar kiri, lalu pilih tool.',
+    mode_single:'Single', mode_pipeline:'Pipeline',
+    pipe_pick_label:'Pilih Tools', pipe_title:'Pipeline',
+    pipe_sub:'Pilih tools di sidebar, lalu klik Mulai Pipeline',
+    pipe_order_label:'Urutan yang akan dijalankan:',
+    pipe_empty_hint:'← Pilih minimal satu tool dari sidebar',
+    btn_start_pipeline:'Mulai Pipeline ▶',
+    btn_prev:'Sebelumnya', btn_next:'Selanjutnya →',
+    btn_cancel_pipe:'Batal Pipeline', btn_finish_pipe:'Selesai & Unduh ⬇',
+    tab_merge:'Gabung', tab_split:'Pisah', tab_compress:'Kompres',
+    tab_rotate:'Putar', tab_delete:'Hapus Halaman', tab_reorder:'Atur Urutan',
+    tab_watermark:'Watermark', tab_signature:'Tanda Tangan',
+    merge_title:'Gabungkan PDF', merge_sub:'Gabungkan beberapa PDF menjadi satu dokumen', merge_add:'Tambah file lain untuk digabung',
+    split_title:'Pisahkan PDF', split_sub:'Ekstrak range halaman', split_range_label:'Range Halaman', btn_add_range:'Tambah', split_hint:'Contoh: 1-3 atau 5',
+    compress_title:'Kompres PDF', compress_sub:'Kurangi ukuran file PDF',
+    quality_label:'Kualitas Gambar', quality_low:'Rendah', quality_high:'Tinggi',
+    rotate_title:'Putar Halaman', rotate_sub:'Putar halaman individual atau semua sekaligus',
+    all_left:'Semua Kiri', all_right:'Semua Kanan', all_180:'Semua 180°',
+    delete_title:'Hapus Halaman', delete_sub:'Klik halaman untuk menandai penghapusan',
+    marked:'ditandai', btn_clear_marks:'Batalkan Semua',
+    reorder_title:'Atur Urutan', reorder_sub:'Seret thumbnail untuk mengubah urutan halaman',
+    watermark_title:'Watermark', watermark_sub:'Tambahkan teks watermark ke setiap halaman',
+    wm_text:'Teks', wm_size:'Ukuran Font', wm_opacity:'Opacity', wm_angle:'Sudut°', wm_color:'Warna',
+    sig_title:'Tanda Tangan', sig_sub:'Upload TTD, background putih dihapus otomatis',
+    sig_upload_label:'Upload Tanda Tangan (JPG/PNG)', sig_threshold:'Ambang Background',
+    sig_page:'Halaman', sig_hint:'Seret tanda tangan untuk memposisikan. Drag sudut kanan-bawah untuk resize.',
+    drop_sub:'klik atau seret file PDF',
+    btn_merge:'Gabung & Unduh', btn_split:'Pisah & Unduh', btn_compress:'Kompres & Unduh',
+    btn_rotate:'Terapkan & Unduh', btn_delete:'Hapus & Unduh', btn_reorder:'Simpan & Unduh',
+    btn_watermark:'Terapkan & Unduh', btn_sig:'Terapkan & Unduh',
+    btn_clear_extra:'Hapus tambahan', btn_clear_sig:'Reset TTD',
+    loading_hint:'Upload PDF untuk memuat preview…', page_label:'Hal',
+    err_no_file:'Upload file PDF terlebih dahulu', err_no_sig:'Upload gambar tanda tangan',
+    err_no_marked:'Pilih halaman yang ingin dihapus', err_no_range:'Tambahkan minimal satu range halaman',
+    err_invalid_range:'Format tidak valid. Gunakan: 1-3 atau 5', err_no_stamp:'Tempatkan tanda tangan di halaman PDF',
+    err_no_tools:'Pilih minimal satu tool untuk pipeline',
+    ok_merge:'PDF berhasil digabungkan!', ok_split:'PDF berhasil dipisahkan!',
+    ok_compress:'PDF berhasil dikompres!', ok_rotate:'Halaman berhasil diputar!',
+    ok_delete:'Halaman berhasil dihapus!', ok_reorder:'Urutan berhasil disimpan!',
+    ok_watermark:'Watermark berhasil ditambahkan!', ok_sig:'Tanda tangan berhasil ditambahkan!',
+    ok_pipeline:'Pipeline selesai! File berhasil diunduh.',
+    proc_merge:'Menggabungkan PDF...', proc_split:'Memisahkan PDF...',
+    proc_compress:'Mengompres PDF...', proc_rotate:'Memutar halaman...',
+    proc_delete:'Menghapus halaman...', proc_reorder:'Menyimpan urutan...',
+    proc_watermark:'Menambahkan watermark...', proc_sig:'Menambahkan tanda tangan...',
+    proc_pipeline:'Menjalankan pipeline...',
+  },
+  en: {
+    tools_label:'Tools', file_label:'Active File', upload_text:'Upload PDF',
+    upload_sub:'click or drag file', clear_file:'Remove file',
+    empty_title:'Upload a PDF first', empty_sub:'Upload a PDF from the left sidebar, then pick a tool.',
+    mode_single:'Single', mode_pipeline:'Pipeline',
+    pipe_pick_label:'Pick Tools', pipe_title:'Pipeline',
+    pipe_sub:'Pick tools in sidebar, then click Start Pipeline',
+    pipe_order_label:'Steps to run:', pipe_empty_hint:'← Pick at least one tool from the sidebar',
+    btn_start_pipeline:'Start Pipeline ▶',
+    btn_prev:'Previous', btn_next:'Next →',
+    btn_cancel_pipe:'Cancel Pipeline', btn_finish_pipe:'Finish & Download ⬇',
+    tab_merge:'Merge', tab_split:'Split', tab_compress:'Compress',
+    tab_rotate:'Rotate', tab_delete:'Delete Pages', tab_reorder:'Reorder',
+    tab_watermark:'Watermark', tab_signature:'Signature',
+    merge_title:'Merge PDF', merge_sub:'Combine multiple PDFs into one', merge_add:'Add more files to merge',
+    split_title:'Split PDF', split_sub:'Extract page ranges', split_range_label:'Page Ranges', btn_add_range:'Add', split_hint:'Example: 1-3 or 5',
+    compress_title:'Compress PDF', compress_sub:'Reduce PDF file size',
+    quality_label:'Image Quality', quality_low:'Low', quality_high:'High',
+    rotate_title:'Rotate Pages', rotate_sub:'Rotate individual or all pages at once',
+    all_left:'All Left', all_right:'All Right', all_180:'All 180°',
+    delete_title:'Delete Pages', delete_sub:'Click pages to mark for deletion',
+    marked:'marked', btn_clear_marks:'Clear All',
+    reorder_title:'Reorder Pages', reorder_sub:'Drag thumbnails to rearrange pages',
+    watermark_title:'Watermark', watermark_sub:'Add text watermark to every page',
+    wm_text:'Text', wm_size:'Font Size', wm_opacity:'Opacity', wm_angle:'Angle°', wm_color:'Color',
+    sig_title:'Signature', sig_sub:'Upload signature, white background auto-removed',
+    sig_upload_label:'Upload Signature (JPG/PNG)', sig_threshold:'BG Threshold',
+    sig_page:'Page', sig_hint:'Drag to reposition. Drag bottom-right corner to resize.',
+    drop_sub:'click or drag PDF file',
+    btn_merge:'Merge & Download', btn_split:'Split & Download', btn_compress:'Compress & Download',
+    btn_rotate:'Apply & Download', btn_delete:'Delete & Download', btn_reorder:'Save & Download',
+    btn_watermark:'Apply & Download', btn_sig:'Apply & Download',
+    btn_clear_extra:'Clear extras', btn_clear_sig:'Reset Sig',
+    loading_hint:'Upload PDF to load preview…', page_label:'Page',
+    err_no_file:'Please upload a PDF file first', err_no_sig:'Please upload a signature image',
+    err_no_marked:'Select pages to delete', err_no_range:'Add at least one page range',
+    err_invalid_range:'Invalid format. Use: 1-3 or 5', err_no_stamp:'Place the signature on a PDF page first',
+    err_no_tools:'Select at least one tool for the pipeline',
+    ok_merge:'PDF merged!', ok_split:'PDF split!', ok_compress:'PDF compressed!',
+    ok_rotate:'Pages rotated!', ok_delete:'Pages deleted!', ok_reorder:'Order saved!',
+    ok_watermark:'Watermark added!', ok_sig:'Signature added!',
+    ok_pipeline:'Pipeline done! File downloaded.',
+    proc_merge:'Merging PDF...', proc_split:'Splitting PDF...',
+    proc_compress:'Compressing PDF...', proc_rotate:'Rotating pages...',
+    proc_delete:'Deleting pages...', proc_reorder:'Saving order...',
+    proc_watermark:'Adding watermark...', proc_sig:'Adding signature...',
+    proc_pipeline:'Running pipeline...',
+  }
+};
+function tr(key) { return (T[currentLang]||T.id)[key]||key; }
+
+// ===================== STATE =====================
+let mainFile=null, mainBytes=null, mainPdfJs=null;
+let currentTool='merge', currentLang=localStorage.getItem('pedef_lang')||'id';
+let currentTheme=localStorage.getItem('pedef_theme')||'dark';
+let currentFont=localStorage.getItem('pedef_font')||'jakarta';
+let appMode='single'; // 'single' | 'pipeline'
+
+// Single-mode state
+let mergeExtraFiles=[], splitRanges=[], pageRotations={}, deleteMarked=new Set();
+let reorderPages=[], reorderDragIdx=null, sigProcessedDataURL=null, sigRawFile=null;
+let sigStamps={}, sigPdfJsDoc=null, rotatePagesCount=0, mfDragIdx=null;
+
+// Pipeline state
+const PIPE_ORDER = ['merge','compress','delete','reorder','rotate','split','watermark','signature'];
+const PIPE_META  = {
+  merge:     {icon:'🔗', labelKey:'tab_merge'},
+  compress:  {icon:'🗜️', labelKey:'tab_compress'},
+  delete:    {icon:'🗑️', labelKey:'tab_delete'},
+  reorder:   {icon:'↕️', labelKey:'tab_reorder'},
+  rotate:    {icon:'🔄', labelKey:'tab_rotate'},
+  split:     {icon:'✂️', labelKey:'tab_split'},
+  watermark: {icon:'💧', labelKey:'tab_watermark'},
+  signature: {icon:'✍️', labelKey:'tab_signature'},
+};
+let pipeSelected = new Set();   // tools the user toggled
+let pipeQueue    = [];           // sorted list of tools to run
+let pipeStep     = 0;            // current step index (0-based)
+let pipeBytes    = null;         // working ArrayBuffer passed step-to-step
+let pipePdfJs    = null;
+let pipeMergeExtraFiles = [];
+let pipeSplitRanges = [];
+let pipePageRotations = {};
+let pipeDeleteMarked = new Set();
+let pipeReorderPages = [], pipeReorderDragIdx = null;
+let pipePagesCount = 0;
+let pipeSigDataURL = null, pipeSigRawFile = null, pipeSigStamps = {}, pipeSigPdfJs = null;
+
+// ===================== THEME =====================
+function toggleTheme(){currentTheme=currentTheme==='dark'?'light':'dark';localStorage.setItem('pedef_theme',currentTheme);applyTheme(currentTheme);}
+function applyTheme(theme){document.documentElement.setAttribute('data-theme',theme);document.getElementById('theme-btn').textContent=theme==='dark'?'☀️':'🌙';}
+
+// ===================== FONT =====================
+function toggleFontDropdown(){document.getElementById('font-dropdown').classList.toggle('open');}
+function setFont(key,family,label){currentFont=key;localStorage.setItem('pedef_font',key);applyFont(key);document.getElementById('font-dropdown').classList.remove('open');}
+function applyFont(key){
+  document.body.className=document.body.className.replace(/font-\S+/g,'').trim()+' font-'+key;
+  const fl={jakarta:'Jakarta',outfit:'Outfit',fraunces:'Fraunces',dmsans:'DM Sans',unbounded:'Unbounded'};
+  document.getElementById('current-font-label').textContent=fl[key]||'Jakarta';
+  document.querySelectorAll('.font-option').forEach(o=>o.classList.toggle('active',o.getAttribute('onclick')?.includes("'"+key+"'")));
+}
+
+// ===================== LANGUAGE =====================
+function setLang(lang){
+  currentLang=lang;localStorage.setItem('pedef_lang',lang);
+  document.getElementById('btn-id').classList.toggle('active',lang==='id');
+  document.getElementById('btn-en').classList.toggle('active',lang==='en');
+  document.querySelectorAll('[data-i]').forEach(el=>{const k=el.dataset.i;if(T[lang]&&T[lang][k]!==undefined)el.textContent=T[lang][k];});
+  updateDeleteCount(); updatePipeDeleteCount();
+}
+
+// ===================== MODE =====================
+function setMode(mode){
+  appMode=mode;
+  document.getElementById('mode-single').classList.toggle('active',mode==='single');
+  document.getElementById('mode-pipeline').classList.toggle('active',mode==='pipeline');
+  document.getElementById('single-tools').style.display=mode==='single'?'block':'none';
+  document.getElementById('pipeline-tools').style.display=mode==='pipeline'?'block':'none';
+  document.getElementById('single-panels').style.display='none';
+  document.getElementById('pipeline-panel').style.display='none';
+  document.getElementById('empty-state').style.display='none';
+  if(!mainFile){document.getElementById('empty-state').style.display='flex';return;}
+  if(mode==='single'){
+    document.getElementById('single-panels').style.display='block';
+    setTool(currentTool);
+  } else {
+    document.getElementById('pipeline-panel').style.display='block';
+    document.getElementById('pipe-select-stage').style.display='block';
+    document.getElementById('pipe-wizard-stage').style.display='none';
+    renderPipeQueuePreview();
+  }
+}
+
+// ===================== TOOL SWITCH (single mode) =====================
+async function setTool(name){
+  currentTool=name;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tool-'+name).classList.add('active');
+  document.querySelectorAll('.tool-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  document.getElementById('empty-state').style.display='none';
+  if(!mainFile)return;
+  if(name==='rotate')    await loadRotatePreview();
+  if(name==='delete')    await loadDeletePreview();
+  if(name==='reorder')   await loadReorderPreview();
+  if(name==='signature') initSigPageSelect();
+}
+
+// ===================== MAIN FILE =====================
+function ev(e){e.preventDefault();e.stopPropagation();}
+function dropMain(e){ev(e);const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')handleMainFile(f);}
+function loadMainFile(input){const f=input.files[0];if(f)handleMainFile(f);input.value='';}
+async function handleMainFile(file){
+  mainFile=file; mainBytes=await file.arrayBuffer();
+  mainPdfJs=await pdfjsLib.getDocument({data:mainBytes.slice(0)}).promise;
+  document.getElementById('loaded-name').textContent=file.name;
+  document.getElementById('loaded-meta').textContent=formatSize(file.size)+' · '+mainPdfJs.numPages+(currentLang==='id'?' halaman':' pages');
+  document.getElementById('loaded-badge').classList.add('show');
+  document.getElementById('empty-state').style.display='none';
+  if(appMode==='single'){
+    document.getElementById('single-panels').style.display='block';
+    await setTool(currentTool);
+  } else {
+    document.getElementById('pipeline-panel').style.display='block';
+    renderPipeQueuePreview();
+  }
+}
+function clearMainFile(){
+  mainFile=null;mainBytes=null;mainPdfJs=null;
+  document.getElementById('loaded-badge').classList.remove('show');
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('single-panels').style.display='none';
+  document.getElementById('pipeline-panel').style.display='none';
+  pageRotations={};deleteMarked.clear();reorderPages=[];
+  document.getElementById('rotate-grid').innerHTML=`<div style="color:var(--text2);font-size:.8rem;padding:12px 0">${tr('loading_hint')}</div>`;
+  document.getElementById('delete-grid').innerHTML=`<div style="color:var(--text2);font-size:.8rem;padding:12px 0">${tr('loading_hint')}</div>`;
+  document.getElementById('reorder-grid').innerHTML=`<div style="color:var(--text2);font-size:.8rem;padding:12px 0">${tr('loading_hint')}</div>`;
+  document.getElementById('sig-canvas-wrap').style.display='none';
+}
+
+// ===================== HELPERS =====================
+function formatSize(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function download(bytes,name){const blob=new Blob([bytes],{type:'application/pdf'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function showProg(key,label){const w=document.getElementById(key+'-progress');if(w)w.classList.add('show');const l=document.getElementById(key+'-plabel');if(l)l.textContent=label;setProg(key,0);}
+function setProg(key,pct){const b=document.getElementById(key+'-bar');if(b)b.style.width=pct+'%';}
+function hideProg(key){setTimeout(()=>{const w=document.getElementById(key+'-progress');if(w)w.classList.remove('show');},1400);}
+function toast(msg,type='info'){const c=document.getElementById('toast-container');const el=document.createElement('div');el.className='toast '+type;el.innerHTML=(type==='success'?'✅':type==='error'?'❌':'ℹ️')+' '+msg;c.appendChild(el);setTimeout(()=>el.remove(),4000);}
+
+// ===================== SINGLE: MERGE =====================
+function dropMergeExtra(e){ev(e);Array.from(e.dataTransfer.files).forEach(f=>{if(f.type==='application/pdf')mergeExtraFiles.push(f);});renderMergeExtra();}
+function addMergeFiles(inp){Array.from(inp.files).forEach(f=>{if(f.type==='application/pdf')mergeExtraFiles.push(f);});renderMergeExtra();inp.value='';}
+function clearMergeExtra(){mergeExtraFiles=[];renderMergeExtra();}
+function renderMergeExtra(){
+  const list=document.getElementById('merge-extra-list');
+  if(!mergeExtraFiles.length){list.innerHTML='';return;}
+  list.innerHTML=mergeExtraFiles.map((f,i)=>`<div class="file-item" draggable="true" ondragstart="mfDragIdx=${i};this.style.opacity='.35'" ondragover="ev(event);this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''" ondrop="ev(event);this.style.borderColor='';if(mfDragIdx!==null&&mfDragIdx!==${i}){const[m]=mergeExtraFiles.splice(mfDragIdx,1);mergeExtraFiles.splice(${i},0,m);mfDragIdx=null;renderMergeExtra()}" ondragend="this.style.opacity='1'"><span class="drag-handle">⠿</span><span class="file-icon-sm">📄</span><div class="file-info"><div class="file-name-sm">${f.name}</div><div class="file-size-sm">${formatSize(f.size)}</div></div><button class="icon-btn" onclick="mergeExtraFiles.splice(${i},1);renderMergeExtra()">✕</button></div>`).join('');
+}
+async function doMerge(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  showProg('merge',tr('proc_merge'));
+  try{
+    const merged=await PDFLib.PDFDocument.create();
+    const all=[mainFile,...mergeExtraFiles];
+    for(let i=0;i<all.length;i++){setProg('merge',(i/all.length)*90);const b=await all[i].arrayBuffer();const d=await PDFLib.PDFDocument.load(b);const pp=await merged.copyPages(d,d.getPageIndices());pp.forEach(p=>merged.addPage(p));}
+    setProg('merge',95);const out=await merged.save();setProg('merge',100);download(out,'merged.pdf');toast(tr('ok_merge'),'success');
+  }catch(e){toast('Error: '+e.message,'error');}
+  hideProg('merge');
+}
+
+// ===================== SINGLE: SPLIT =====================
+function addRange(){const v=document.getElementById('split-range-input').value.trim();if(!v)return;if(!/^\d+(-\d+)?$/.test(v)){toast(tr('err_invalid_range'),'error');return;}splitRanges.push(v);document.getElementById('split-range-input').value='';renderRangeTags();}
+function renderRangeTags(){document.getElementById('split-range-tags').innerHTML=splitRanges.map((r,i)=>`<span class="range-tag">${r} <button onclick="splitRanges.splice(${i},1);renderRangeTags()">✕</button></span>`).join('');}
+async function doSplit(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  if(!splitRanges.length){toast(tr('err_no_range'),'error');return;}
+  showProg('split',tr('proc_split'));
+  try{
+    const src=await PDFLib.PDFDocument.load(mainBytes);const total=src.getPageCount();
+    for(let ri=0;ri<splitRanges.length;ri++){setProg('split',(ri/splitRanges.length)*90);const range=splitRanges[ri];let pages=[];if(range.includes('-')){let[s,e]=range.split('-').map(Number);s=Math.max(1,s);e=Math.min(total,e);for(let p=s;p<=e;p++)pages.push(p-1);}else{const p=parseInt(range);if(p>=1&&p<=total)pages.push(p-1);}if(!pages.length)continue;const nd=await PDFLib.PDFDocument.create();const cp=await nd.copyPages(src,pages);cp.forEach(p=>nd.addPage(p));download(await nd.save(),`split_${range.replace('-','_')}.pdf`);}
+    setProg('split',100);toast(tr('ok_split'),'success');
+  }catch(e){toast('Error: '+e.message,'error');}
+  hideProg('split');
+}
+
+// ===================== SINGLE: COMPRESS =====================
+function updateQuality(el){document.getElementById('quality-val').textContent=el.value+'%';el.style.setProperty('--val',el.value+'%');}
+async function doCompress(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  const q=parseInt(document.getElementById('quality-slider').value)/100;
+  showProg('compress',tr('proc_compress'));
+  try{const out=await compressViaCanvas(mainBytes,q);setProg('compress',100);download(out,mainFile.name.replace('.pdf','_compressed.pdf'));toast(tr('ok_compress'),'success');}catch(e){toast('Error: '+e.message,'error');}
+  hideProg('compress');
+}
+async function compressViaCanvas(pdfBytes,quality){
+  const pdf=await pdfjsLib.getDocument({data:pdfBytes.slice(0)}).promise;const nd=await PDFLib.PDFDocument.create();const scale=quality>.7?1.5:quality>.4?1:.75;
+  for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i);const vp=page.getViewport({scale});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const b64=canvas.toDataURL('image/jpeg',quality).split(',')[1];const jb=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const img=await nd.embedJpg(jb);const np=nd.addPage([vp.width,vp.height]);np.drawImage(img,{x:0,y:0,width:vp.width,height:vp.height});setProg('compress',(i/pdf.numPages)*90);}
+  return nd.save();
+}
+
+// ===================== SINGLE: ROTATE =====================
+async function loadRotatePreview(){
+  if(!mainPdfJs)return;rotatePagesCount=mainPdfJs.numPages;
+  for(let i=1;i<=rotatePagesCount;i++)if(pageRotations[i]===undefined)pageRotations[i]=0;
+  const grid=document.getElementById('rotate-grid');grid.innerHTML='';
+  for(let i=1;i<=rotatePagesCount;i++){const page=await mainPdfJs.getPage(i);const vp=page.getViewport({scale:.45});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const card=document.createElement('div');card.className='rotate-card';card.innerHTML=`<div class="rotate-thumb" id="rt-${i}" style="transform:rotate(${pageRotations[i]}deg)"><img src="${canvas.toDataURL()}" alt="page ${i}"></div><div class="rotate-meta">${tr('page_label')} ${i} · <span id="rdeg-${i}">${pageRotations[i]}°</span></div><div class="rotate-btns"><button class="icon-btn" onclick="rotatePage(${i},-90)">↺</button><button class="icon-btn" onclick="rotatePage(${i},180)">↕</button><button class="icon-btn" onclick="rotatePage(${i},90)">↻</button></div>`;grid.appendChild(card);}
+}
+function rotatePage(i,deg){pageRotations[i]=((pageRotations[i]||0)+deg+360)%360;document.getElementById('rt-'+i).style.transform=`rotate(${pageRotations[i]}deg)`;document.getElementById('rdeg-'+i).textContent=pageRotations[i]+'°';}
+function rotateAll(deg){for(let i=1;i<=rotatePagesCount;i++)rotatePage(i,deg);}
+async function doRotate(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  showProg('rotate',tr('proc_rotate'));
+  try{const doc=await PDFLib.PDFDocument.load(mainBytes);doc.getPages().forEach((p,i)=>{const d=pageRotations[i+1]||0;if(d)p.setRotation(PDFLib.degrees(d));});setProg('rotate',90);const out=await doc.save();setProg('rotate',100);download(out,mainFile.name.replace('.pdf','_rotated.pdf'));toast(tr('ok_rotate'),'success');}catch(e){toast('Error: '+e.message,'error');}
+  hideProg('rotate');
+}
+
+// ===================== SINGLE: DELETE =====================
+async function loadDeletePreview(){
+  if(!mainPdfJs)return;deleteMarked.clear();updateDeleteCount();
+  const grid=document.getElementById('delete-grid');grid.innerHTML='';
+  for(let i=1;i<=mainPdfJs.numPages;i++){const page=await mainPdfJs.getPage(i);const vp=page.getViewport({scale:.4});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const thumb=document.createElement('div');thumb.className='page-thumb';thumb.id='dt-'+i;thumb.innerHTML=`<img src="${canvas.toDataURL()}" alt="page ${i}"><div class="page-num-badge">${i}</div><div class="page-mark-label">${currentLang==='id'?'HAPUS':'DEL'}</div>`;thumb.onclick=()=>toggleDeletePage(i);grid.appendChild(thumb);}
+}
+function toggleDeletePage(i){const el=document.getElementById('dt-'+i);if(deleteMarked.has(i)){deleteMarked.delete(i);el.classList.remove('marked');}else{deleteMarked.add(i);el.classList.add('marked');}updateDeleteCount();}
+function clearDeleteMarks(){deleteMarked.forEach(i=>{const e=document.getElementById('dt-'+i);if(e)e.classList.remove('marked');});deleteMarked.clear();updateDeleteCount();}
+function updateDeleteCount(){const el=document.getElementById('delete-count-label');if(el)el.innerHTML=`<strong>${deleteMarked.size}</strong> ${tr('marked')}`;}
+async function doDeletePages(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  if(!deleteMarked.size){toast(tr('err_no_marked'),'error');return;}
+  showProg('delete',tr('proc_delete'));
+  try{const doc=await PDFLib.PDFDocument.load(mainBytes);[...deleteMarked].sort((a,b)=>b-a).forEach(i=>{if(i>=1&&i<=doc.getPageCount())doc.removePage(i-1);});setProg('delete',90);const out=await doc.save();setProg('delete',100);download(out,mainFile.name.replace('.pdf','_edited.pdf'));toast(tr('ok_delete'),'success');}catch(e){toast('Error: '+e.message,'error');}
+  hideProg('delete');
+}
+
+// ===================== SINGLE: REORDER =====================
+async function loadReorderPreview(){if(!mainPdfJs)return;reorderPages=Array.from({length:mainPdfJs.numPages},(_,i)=>i+1);await renderReorderGrid();}
+async function renderReorderGrid(){
+  const grid=document.getElementById('reorder-grid');grid.innerHTML='';
+  for(let idx=0;idx<reorderPages.length;idx++){const i=reorderPages[idx];const page=await mainPdfJs.getPage(i);const vp=page.getViewport({scale:.4});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const thumb=document.createElement('div');thumb.className='page-thumb';thumb.draggable=true;thumb.dataset.idx=idx;thumb.innerHTML=`<img src="${canvas.toDataURL()}" alt="page ${i}"><div class="page-num-badge">${i}</div><div class="thumb-drag-handle">⠿</div>`;thumb.ondragstart=()=>{reorderDragIdx=idx;thumb.style.opacity='.35';};thumb.ondragend=()=>{thumb.style.opacity='1';};thumb.ondragover=e=>{ev(e);thumb.style.borderColor='var(--accent)';};thumb.ondragleave=()=>{thumb.style.borderColor='';};thumb.ondrop=async e=>{ev(e);thumb.style.borderColor='';if(reorderDragIdx===null||reorderDragIdx===idx)return;const[m]=reorderPages.splice(reorderDragIdx,1);reorderPages.splice(idx,0,m);reorderDragIdx=null;await renderReorderGrid();};grid.appendChild(thumb);}
+}
+async function doReorder(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  showProg('reorder',tr('proc_reorder'));
+  try{const src=await PDFLib.PDFDocument.load(mainBytes);const nd=await PDFLib.PDFDocument.create();const cp=await nd.copyPages(src,reorderPages.map(p=>p-1));cp.forEach(p=>nd.addPage(p));setProg('reorder',90);const out=await nd.save();setProg('reorder',100);download(out,mainFile.name.replace('.pdf','_reordered.pdf'));toast(tr('ok_reorder'),'success');}catch(e){toast('Error: '+e.message,'error');}
+  hideProg('reorder');
+}
+
+// ===================== SINGLE: WATERMARK =====================
+function updateWMPreview(){const text=document.getElementById('wm-text')?.value||'CONFIDENTIAL';const color=document.getElementById('wm-color')?.value||'#7c6aff';const opacity=document.getElementById('wm-opacity')?.value||0.3;const angle=document.getElementById('wm-angle')?.value||45;const size=document.getElementById('wm-size')?.value||48;const prev=document.getElementById('wm-preview');if(!prev)return;prev.textContent=text;prev.style.color=color;prev.style.opacity=opacity;prev.style.transform=`rotate(${angle}deg)`;prev.style.fontSize=Math.min(size,40)+'px';}
+async function doWatermark(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  const text=document.getElementById('wm-text').value||'WATERMARK';const opacity=parseFloat(document.getElementById('wm-opacity').value);const angle=parseFloat(document.getElementById('wm-angle').value);const size=parseInt(document.getElementById('wm-size').value);const hex=document.getElementById('wm-color').value;const r=parseInt(hex.slice(1,3),16)/255;const g=parseInt(hex.slice(3,5),16)/255;const b=parseInt(hex.slice(5,7),16)/255;
+  showProg('watermark',tr('proc_watermark'));
+  try{const doc=await PDFLib.PDFDocument.load(mainBytes);const font=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);doc.getPages().forEach(page=>{const{width,height}=page.getSize();page.drawText(text,{x:width/2-(text.length*size*.28),y:height/2,size,font,color:PDFLib.rgb(r,g,b),opacity,rotate:PDFLib.degrees(angle)});});setProg('watermark',90);const out=await doc.save();setProg('watermark',100);download(out,mainFile.name.replace('.pdf','_watermarked.pdf'));toast(tr('ok_watermark'),'success');}catch(e){toast('Error: '+e.message,'error');}
+  hideProg('watermark');
+}
+
+// ===================== SINGLE: SIGNATURE =====================
+function initSigPageSelect(){if(!mainPdfJs)return;sigPdfJsDoc=mainPdfJs;const sel=document.getElementById('sig-page-select');sel.innerHTML=Array.from({length:mainPdfJs.numPages},(_,i)=>`<option value="${i+1}">${tr('page_label')} ${i+1}</option>`).join('');if(sigProcessedDataURL){document.getElementById('sig-canvas-wrap').style.display='block';renderSigPage();}}
+function dropSigImg(e){ev(e);const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadSigImage({files:[f]});}
+function loadSigImage(input){const file=input.files[0];if(!file)return;sigRawFile=file;const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{processSignature(img);URL.revokeObjectURL(url);};img.src=url;}
+function processSignature(img){const threshold=parseInt(document.getElementById('sig-threshold').value)||230;const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<data.data.length;i+=4){const r=data.data[i],g=data.data[i+1],b=data.data[i+2];if(r>=threshold&&g>=threshold&&b>=threshold)data.data[i+3]=0;}ctx.putImageData(data,0,0);sigProcessedDataURL=canvas.toDataURL('image/png');document.getElementById('sig-preview-img').src=sigProcessedDataURL;document.getElementById('sig-img-preview').style.display='flex';if(mainPdfJs){document.getElementById('sig-canvas-wrap').style.display='block';renderSigPage();}}
+function reprocessSig(){if(!sigRawFile)return;const url=URL.createObjectURL(sigRawFile);const img=new Image();img.onload=()=>{processSignature(img);URL.revokeObjectURL(url);};img.src=url;}
+async function renderSigPage(){if(!sigPdfJsDoc||!sigProcessedDataURL)return;const pageNum=parseInt(document.getElementById('sig-page-select').value);const page=await sigPdfJsDoc.getPage(pageNum);const vp=page.getViewport({scale:1.4});const canvas=document.getElementById('sig-pdf-canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;if(!sigStamps[pageNum])sigStamps[pageNum]={x:(vp.width-160)/2,y:(vp.height-80)/2,w:160,h:80};renderSigStamp(pageNum);}
+function renderSigStamp(pageNum,prefix=''){
+  const cid=prefix?'pipe-sig-stamp-container':'sig-stamp-container';
+  const container=document.getElementById(cid);const stamps=prefix?pipeSigStamps:sigStamps;const dataURL=prefix?pipeSigDataURL:sigProcessedDataURL;
+  const stamp=stamps[pageNum];if(!stamp||!dataURL){container.innerHTML='';return;}container.innerHTML='';container.style.pointerEvents='none';
+  const el=document.createElement('div');el.className='sig-stamp';el.style.cssText=`left:${stamp.x}px;top:${stamp.y}px;width:${stamp.w}px;height:${stamp.h}px;pointer-events:all`;el.innerHTML=`<img src="${dataURL}" alt="sig"><div class="sig-resize"></div>`;container.appendChild(el);
+  let drag=false,sx,sy,ox,oy;el.addEventListener('mousedown',e=>{if(e.target.classList.contains('sig-resize'))return;drag=true;sx=e.clientX;sy=e.clientY;ox=stamp.x;oy=stamp.y;e.preventDefault();});document.addEventListener('mousemove',e=>{if(!drag)return;stamp.x=ox+(e.clientX-sx);stamp.y=oy+(e.clientY-sy);el.style.left=stamp.x+'px';el.style.top=stamp.y+'px';});document.addEventListener('mouseup',()=>drag=false);
+  el.addEventListener('touchstart',e=>{if(e.target.classList.contains('sig-resize'))return;const tc=e.touches[0];drag=true;sx=tc.clientX;sy=tc.clientY;ox=stamp.x;oy=stamp.y;},{passive:true});document.addEventListener('touchmove',e=>{if(!drag)return;const tc=e.touches[0];stamp.x=ox+(tc.clientX-sx);stamp.y=oy+(tc.clientY-sy);el.style.left=stamp.x+'px';el.style.top=stamp.y+'px';},{passive:true});document.addEventListener('touchend',()=>drag=false);
+  const rh=el.querySelector('.sig-resize');let res=false,rsx,rsy,rw0,rh0;rh.addEventListener('mousedown',e=>{res=true;rsx=e.clientX;rsy=e.clientY;rw0=stamp.w;rh0=stamp.h;e.preventDefault();e.stopPropagation();});document.addEventListener('mousemove',e=>{if(!res)return;stamp.w=Math.max(40,rw0+(e.clientX-rsx));stamp.h=Math.max(20,rh0+(e.clientY-rsy));el.style.width=stamp.w+'px';el.style.height=stamp.h+'px';});document.addEventListener('mouseup',()=>res=false);
+}
+function clearSig(){sigProcessedDataURL=null;sigRawFile=null;sigStamps={};document.getElementById('sig-img-preview').style.display='none';document.getElementById('sig-canvas-wrap').style.display='none';}
+async function doSignature(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  if(!sigProcessedDataURL){toast(tr('err_no_sig'),'error');return;}
+  if(!Object.keys(sigStamps).length){toast(tr('err_no_stamp'),'error');return;}
+  showProg('signature',tr('proc_sig'));
+  try{const doc=await PDFLib.PDFDocument.load(mainBytes);const sigB64=sigProcessedDataURL.split(',')[1];const sigBytes=Uint8Array.from(atob(sigB64),c=>c.charCodeAt(0));const sigImg=await doc.embedPng(sigBytes);for(const[pnStr,stamp]of Object.entries(sigStamps)){if(!stamp)continue;const pn=parseInt(pnStr);const page=doc.getPage(pn-1);const{width:pdfW,height:pdfH}=page.getSize();const canvas=document.getElementById('sig-pdf-canvas');const scx=pdfW/canvas.width,scy=pdfH/canvas.height;page.drawImage(sigImg,{x:stamp.x*scx,y:pdfH-(stamp.y+stamp.h)*scy,width:stamp.w*scx,height:stamp.h*scy});}setProg('signature',90);const out=await doc.save();setProg('signature',100);download(out,mainFile.name.replace('.pdf','_signed.pdf'));toast(tr('ok_sig'),'success');}catch(e){toast('Error: '+e.message,'error');console.error(e);}
+  hideProg('signature');
+}
+
+// ===================== PIPELINE: TOOL SELECTION =====================
+function togglePipeTool(name){
+  const card=document.getElementById('ptc-'+name);
+  if(pipeSelected.has(name)){pipeSelected.delete(name);card.classList.remove('selected');}
+  else{pipeSelected.add(name);card.classList.add('selected');}
+  renderPipeQueuePreview();
+}
+function renderPipeQueuePreview(){
+  pipeQueue=PIPE_ORDER.filter(t=>pipeSelected.has(t));
+  const card=document.getElementById('pipe-queue-card');
+  const hint=document.getElementById('pipe-empty-hint');
+  if(!pipeQueue.length){card.style.display='none';hint.style.display='block';return;}
+  card.style.display='block';hint.style.display='none';
+  document.getElementById('pipe-queue-preview').innerHTML=pipeQueue.map((tool,i)=>`
+    ${i>0?'<div class="pipe-arrow">↓</div>':''}
+    <div class="pipe-step">
+      <div class="pipe-step-num">${i+1}</div>
+      <span class="pipe-step-icon">${PIPE_META[tool].icon}</span>
+      <span class="pipe-step-name">${tr(PIPE_META[tool].labelKey)}</span>
+    </div>`).join('');
+}
+
+// ===================== PIPELINE: START =====================
+async function startPipeline(){
+  if(!mainFile){toast(tr('err_no_file'),'error');return;}
+  pipeQueue=PIPE_ORDER.filter(t=>pipeSelected.has(t));
+  if(!pipeQueue.length){toast(tr('err_no_tools'),'error');return;}
+  pipeStep=0;
+  pipeBytes=mainBytes.slice(0);
+  pipeMergeExtraFiles=[];pipeSplitRanges=[];pipePageRotations={};pipeDeleteMarked.clear();pipeReorderPages=[];pipeSigDataURL=null;pipeSigRawFile=null;pipeSigStamps={};
+  document.getElementById('pipe-select-stage').style.display='none';
+  document.getElementById('pipe-wizard-stage').style.display='block';
+  await goToPipeStep(0);
+}
+function cancelPipeline(){
+  document.getElementById('pipe-wizard-stage').style.display='none';
+  document.getElementById('pipe-select-stage').style.display='block';
+}
+
+// ===================== PIPELINE: NAVIGATION =====================
+async function pipeNext(){
+  const tool=pipeQueue[pipeStep];
+  // Validate current step
+  if(tool==='split'&&!pipeSplitRanges.length){toast(tr('err_no_range'),'error');return;}
+  if(tool==='signature'&&!pipeSigDataURL){toast(tr('err_no_sig'),'error');return;}
+  // Process current step into pipeBytes
+  const ok=await processPipeStep(tool);
+  if(!ok)return;
+  markPipeStepDone(pipeStep);
+  if(pipeStep>=pipeQueue.length-1){
+    // Final step done → download
+    const fname=mainFile.name.replace('.pdf','_pipeline.pdf');
+    if(tool==='split'){toast(tr('ok_pipeline'),'success');return;} // split already downloaded
+    download(pipeBytes,fname);
+    toast(tr('ok_pipeline'),'success');
+    setTimeout(cancelPipeline,800);
+    return;
+  }
+  pipeStep++;
+  await goToPipeStep(pipeStep);
+}
+async function pipePrev(){
+  if(pipeStep===0)return;
+  pipeStep--;
+  await goToPipeStep(pipeStep);
+}
+
+async function goToPipeStep(idx){
+  const tool=pipeQueue[idx];
+  // Hide all wizards
+  document.querySelectorAll('.pipe-wizard').forEach(w=>w.classList.remove('active'));
+  document.getElementById('pw-'+tool).classList.add('active');
+  // Update title
+  document.getElementById('pipe-wizard-title').textContent=PIPE_META[tool].icon+' '+tr(PIPE_META[tool].labelKey);
+  document.getElementById('pipe-wizard-sub').textContent=tr(tool+'_sub')||'';
+  document.getElementById('pipe-cur-step').textContent=idx+1;
+  document.getElementById('pipe-total-steps').textContent=pipeQueue.length;
+  // Next button label
+  const nextBtn=document.getElementById('pipe-next-btn');
+  const nextLabel=document.getElementById('pipe-next-label');
+  nextLabel.textContent=idx===pipeQueue.length-1?tr('btn_finish_pipe'):tr('btn_next');
+  // Prev button
+  document.getElementById('pipe-prev-btn').style.visibility=idx===0?'hidden':'visible';
+  // Mini queue
+  renderMiniQueue(idx);
+  // Load previews if needed
+  pipePdfJs=await pdfjsLib.getDocument({data:pipeBytes.slice(0)}).promise;
+  pipePagesCount=pipePdfJs.numPages;
+  if(tool==='rotate') await loadPipeRotatePreview();
+  if(tool==='delete') await loadPipeDeletePreview();
+  if(tool==='reorder'){ pipeReorderPages=Array.from({length:pipePagesCount},(_,i)=>i+1);await renderPipeReorderGrid();}
+  if(tool==='signature') initPipeSigPageSelect();
+}
+
+function renderMiniQueue(currentIdx){
+  document.getElementById('pipe-mini-queue').innerHTML=pipeQueue.map((tool,i)=>`
+    <div class="pipe-step">
+      <div class="pipe-step-num ${i<currentIdx?'done':i===currentIdx?'active-step':''}">${i<currentIdx?'✓':i+1}</div>
+      <span class="pipe-step-icon">${PIPE_META[tool].icon}</span>
+      <span class="pipe-step-name">${tr(PIPE_META[tool].labelKey)}</span>
+      <span class="pipe-step-status">${i<currentIdx?'✅':i===currentIdx?'⏳':''}</span>
+    </div>`).join('');
+}
+function markPipeStepDone(idx){renderMiniQueue(idx+1);}
+
+// ===================== PIPELINE: PROCESS STEPS =====================
+async function processPipeStep(tool){
+  try{
+    if(tool==='merge'){
+      const merged=await PDFLib.PDFDocument.create();
+      const allFiles=[{arrayBuffer:()=>Promise.resolve(pipeBytes)},...pipeMergeExtraFiles];
+      for(const f of allFiles){const b=await f.arrayBuffer();const d=await PDFLib.PDFDocument.load(b);const pp=await merged.copyPages(d,d.getPageIndices());pp.forEach(p=>merged.addPage(p));}
+      pipeBytes=await merged.save();
+    }
+    if(tool==='compress'){
+      const q=parseInt(document.getElementById('pipe-quality-slider').value)/100;
+      pipeBytes=await compressViaCanvas(pipeBytes,q);
+    }
+    if(tool==='delete'){
+      if(!pipeDeleteMarked.size){toast(tr('err_no_marked'),'error');return false;}
+      const doc=await PDFLib.PDFDocument.load(pipeBytes);[...pipeDeleteMarked].sort((a,b)=>b-a).forEach(i=>{if(i>=1&&i<=doc.getPageCount())doc.removePage(i-1);});pipeBytes=await doc.save();pipeDeleteMarked.clear();
+    }
+    if(tool==='reorder'){
+      const src=await PDFLib.PDFDocument.load(pipeBytes);const nd=await PDFLib.PDFDocument.create();const cp=await nd.copyPages(src,pipeReorderPages.map(p=>p-1));cp.forEach(p=>nd.addPage(p));pipeBytes=await nd.save();
+    }
+    if(tool==='rotate'){
+      const doc=await PDFLib.PDFDocument.load(pipeBytes);doc.getPages().forEach((p,i)=>{const d=pipePageRotations[i+1]||0;if(d)p.setRotation(PDFLib.degrees(d));});pipeBytes=await doc.save();
+    }
+    if(tool==='split'){
+      if(!pipeSplitRanges.length){toast(tr('err_no_range'),'error');return false;}
+      const src=await PDFLib.PDFDocument.load(pipeBytes);const total=src.getPageCount();
+      for(const range of pipeSplitRanges){let pages=[];if(range.includes('-')){let[s,e]=range.split('-').map(Number);s=Math.max(1,s);e=Math.min(total,e);for(let p=s;p<=e;p++)pages.push(p-1);}else{const p=parseInt(range);if(p>=1&&p<=total)pages.push(p-1);}if(!pages.length)continue;const nd=await PDFLib.PDFDocument.create();const cp=await nd.copyPages(src,pages);cp.forEach(p=>nd.addPage(p));download(await nd.save(),mainFile.name.replace('.pdf',`_pipeline_${range}.pdf`));}
+      return true;
+    }
+    if(tool==='watermark'){
+      const text=document.getElementById('pipe-wm-text').value||'WATERMARK';const opacity=parseFloat(document.getElementById('pipe-wm-opacity').value);const angle=parseFloat(document.getElementById('pipe-wm-angle').value);const size=parseInt(document.getElementById('pipe-wm-size').value);const hex=document.getElementById('pipe-wm-color').value;const r=parseInt(hex.slice(1,3),16)/255;const g=parseInt(hex.slice(3,5),16)/255;const b=parseInt(hex.slice(5,7),16)/255;
+      const doc=await PDFLib.PDFDocument.load(pipeBytes);const font=await doc.embedFont(PDFLib.StandardFonts.HelveticaBold);doc.getPages().forEach(page=>{const{width,height}=page.getSize();page.drawText(text,{x:width/2-(text.length*size*.28),y:height/2,size,font,color:PDFLib.rgb(r,g,b),opacity,rotate:PDFLib.degrees(angle)});});pipeBytes=await doc.save();
+    }
+    if(tool==='signature'){
+      if(!pipeSigDataURL){toast(tr('err_no_sig'),'error');return false;}
+      const doc=await PDFLib.PDFDocument.load(pipeBytes);const sigB64=pipeSigDataURL.split(',')[1];const sigBytes=Uint8Array.from(atob(sigB64),c=>c.charCodeAt(0));const sigImg=await doc.embedPng(sigBytes);
+      for(const[pnStr,stamp]of Object.entries(pipeSigStamps)){if(!stamp)continue;const pn=parseInt(pnStr);const page=doc.getPage(pn-1);const{width:pdfW,height:pdfH}=page.getSize();const canvas=document.getElementById('pipe-sig-canvas');const scx=pdfW/canvas.width,scy=pdfH/canvas.height;page.drawImage(sigImg,{x:stamp.x*scx,y:pdfH-(stamp.y+stamp.h)*scy,width:stamp.w*scx,height:stamp.h*scy});}
+      pipeBytes=await doc.save();
+    }
+    return true;
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);return false;}
+}
+
+// ===================== PIPELINE: STEP UIs =====================
+// Merge
+function dropPipeMerge(e){ev(e);Array.from(e.dataTransfer.files).forEach(f=>{if(f.type==='application/pdf')pipeMergeExtraFiles.push(f);});renderPipeMergeList();}
+function addPipeMergeFiles(inp){Array.from(inp.files).forEach(f=>{if(f.type==='application/pdf')pipeMergeExtraFiles.push(f);});renderPipeMergeList();inp.value='';}
+function renderPipeMergeList(){const list=document.getElementById('pipe-merge-extra-list');if(!pipeMergeExtraFiles.length){list.innerHTML='';return;}list.innerHTML=pipeMergeExtraFiles.map((f,i)=>`<div class="file-item"><span class="file-icon-sm">📄</span><div class="file-info"><div class="file-name-sm">${f.name}</div><div class="file-size-sm">${formatSize(f.size)}</div></div><button class="icon-btn" onclick="pipeMergeExtraFiles.splice(${i},1);renderPipeMergeList()">✕</button></div>`).join('');}
+// Quality
+function updatePipeQuality(el){document.getElementById('pipe-quality-val').textContent=el.value+'%';el.style.setProperty('--val',el.value+'%');}
+// Delete
+async function loadPipeDeletePreview(){
+  pipeDeleteMarked.clear();updatePipeDeleteCount();const grid=document.getElementById('pipe-delete-grid');grid.innerHTML='';
+  for(let i=1;i<=pipePagesCount;i++){const page=await pipePdfJs.getPage(i);const vp=page.getViewport({scale:.4});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const thumb=document.createElement('div');thumb.className='page-thumb';thumb.id='pdt-'+i;thumb.innerHTML=`<img src="${canvas.toDataURL()}" alt="page ${i}"><div class="page-num-badge">${i}</div><div class="page-mark-label">${currentLang==='id'?'HAPUS':'DEL'}</div>`;thumb.onclick=()=>{const el=document.getElementById('pdt-'+i);if(pipeDeleteMarked.has(i)){pipeDeleteMarked.delete(i);el.classList.remove('marked');}else{pipeDeleteMarked.add(i);el.classList.add('marked');}updatePipeDeleteCount();};grid.appendChild(thumb);}
+}
+function clearPipeDeleteMarks(){pipeDeleteMarked.forEach(i=>{const e=document.getElementById('pdt-'+i);if(e)e.classList.remove('marked');});pipeDeleteMarked.clear();updatePipeDeleteCount();}
+function updatePipeDeleteCount(){const el=document.getElementById('pipe-delete-count');if(el)el.innerHTML=`<strong>${pipeDeleteMarked.size}</strong> ${tr('marked')}`;}
+// Reorder
+async function renderPipeReorderGrid(){
+  const grid=document.getElementById('pipe-reorder-grid');grid.innerHTML='';
+  for(let idx=0;idx<pipeReorderPages.length;idx++){const i=pipeReorderPages[idx];const page=await pipePdfJs.getPage(i);const vp=page.getViewport({scale:.4});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const thumb=document.createElement('div');thumb.className='page-thumb';thumb.draggable=true;thumb.innerHTML=`<img src="${canvas.toDataURL()}" alt="page ${i}"><div class="page-num-badge">${i}</div><div class="thumb-drag-handle">⠿</div>`;thumb.ondragstart=()=>{pipeReorderDragIdx=idx;thumb.style.opacity='.35';};thumb.ondragend=()=>{thumb.style.opacity='1';};thumb.ondragover=e=>{ev(e);thumb.style.borderColor='var(--accent)';};thumb.ondragleave=()=>{thumb.style.borderColor='';};thumb.ondrop=async e=>{ev(e);thumb.style.borderColor='';if(pipeReorderDragIdx===null||pipeReorderDragIdx===idx)return;const[m]=pipeReorderPages.splice(pipeReorderDragIdx,1);pipeReorderPages.splice(idx,0,m);pipeReorderDragIdx=null;await renderPipeReorderGrid();};grid.appendChild(thumb);}
+}
+// Rotate
+async function loadPipeRotatePreview(){
+  for(let i=1;i<=pipePagesCount;i++)if(pipePageRotations[i]===undefined)pipePageRotations[i]=0;
+  const grid=document.getElementById('pipe-rotate-grid');grid.innerHTML='';
+  for(let i=1;i<=pipePagesCount;i++){const page=await pipePdfJs.getPage(i);const vp=page.getViewport({scale:.45});const canvas=document.createElement('canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;const card=document.createElement('div');card.className='rotate-card';card.innerHTML=`<div class="rotate-thumb" id="prt-${i}" style="transform:rotate(${pipePageRotations[i]}deg)"><img src="${canvas.toDataURL()}" alt="page ${i}"></div><div class="rotate-meta">${tr('page_label')} ${i} · <span id="prdeg-${i}">${pipePageRotations[i]}°</span></div><div class="rotate-btns"><button class="icon-btn" onclick="rotatePipePage(${i},-90)">↺</button><button class="icon-btn" onclick="rotatePipePage(${i},180)">↕</button><button class="icon-btn" onclick="rotatePipePage(${i},90)">↻</button></div>`;grid.appendChild(card);}
+}
+function rotatePipePage(i,deg){pipePageRotations[i]=((pipePageRotations[i]||0)+deg+360)%360;document.getElementById('prt-'+i).style.transform=`rotate(${pipePageRotations[i]}deg)`;document.getElementById('prdeg-'+i).textContent=pipePageRotations[i]+'°';}
+function rotatePipeAll(deg){for(let i=1;i<=pipePagesCount;i++)rotatePipePage(i,deg);}
+// Split
+function addPipeRange(){const v=document.getElementById('pipe-split-input').value.trim();if(!v)return;if(!/^\d+(-\d+)?$/.test(v)){toast(tr('err_invalid_range'),'error');return;}pipeSplitRanges.push(v);document.getElementById('pipe-split-input').value='';renderPipeSplitTags();}
+function renderPipeSplitTags(){document.getElementById('pipe-split-tags').innerHTML=pipeSplitRanges.map((r,i)=>`<span class="range-tag">${r} <button onclick="pipeSplitRanges.splice(${i},1);renderPipeSplitTags()">✕</button></span>`).join('');}
+// Watermark
+function updatePipeWM(){const text=document.getElementById('pipe-wm-text')?.value||'CONFIDENTIAL';const color=document.getElementById('pipe-wm-color')?.value||'#7c6aff';const opacity=document.getElementById('pipe-wm-opacity')?.value||0.3;const angle=document.getElementById('pipe-wm-angle')?.value||45;const size=document.getElementById('pipe-wm-size')?.value||48;const prev=document.getElementById('pipe-wm-preview');if(!prev)return;prev.textContent=text;prev.style.color=color;prev.style.opacity=opacity;prev.style.transform=`rotate(${angle}deg)`;prev.style.fontSize=Math.min(size,40)+'px';}
+// Signature
+function initPipeSigPageSelect(){pipeSigPdfJs=pipePdfJs;const sel=document.getElementById('pipe-sig-page-select');sel.innerHTML=Array.from({length:pipePagesCount},(_,i)=>`<option value="${i+1}">${tr('page_label')} ${i+1}</option>`).join('');if(pipeSigDataURL){document.getElementById('pipe-sig-canvas-wrap').style.display='block';renderPipeSigPage();}}
+function dropPipeSigImg(e){ev(e);const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadPipeSigImage({files:[f]});}
+function loadPipeSigImage(input){const file=input.files[0];if(!file)return;pipeSigRawFile=file;const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{processPipeSig(img);URL.revokeObjectURL(url);};img.src=url;}
+function processPipeSig(img){const threshold=parseInt(document.getElementById('pipe-sig-threshold').value)||230;const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);const data=ctx.getImageData(0,0,canvas.width,canvas.height);for(let i=0;i<data.data.length;i+=4){const r=data.data[i],g=data.data[i+1],b=data.data[i+2];if(r>=threshold&&g>=threshold&&b>=threshold)data.data[i+3]=0;}ctx.putImageData(data,0,0);pipeSigDataURL=canvas.toDataURL('image/png');document.getElementById('pipe-sig-preview-img').src=pipeSigDataURL;document.getElementById('pipe-sig-preview').style.display='flex';document.getElementById('pipe-sig-canvas-wrap').style.display='block';renderPipeSigPage();}
+function reprocessPipeSig(){if(!pipeSigRawFile)return;const url=URL.createObjectURL(pipeSigRawFile);const img=new Image();img.onload=()=>{processPipeSig(img);URL.revokeObjectURL(url);};img.src=url;}
+async function renderPipeSigPage(){if(!pipeSigPdfJs||!pipeSigDataURL)return;const pageNum=parseInt(document.getElementById('pipe-sig-page-select').value);const page=await pipeSigPdfJs.getPage(pageNum);const vp=page.getViewport({scale:1.4});const canvas=document.getElementById('pipe-sig-canvas');canvas.width=vp.width;canvas.height=vp.height;await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;if(!pipeSigStamps[pageNum])pipeSigStamps[pageNum]={x:(vp.width-160)/2,y:(vp.height-80)/2,w:160,h:80};renderSigStamp(pageNum,'pipe');}
+
+// ===================== INIT =====================
+applyTheme(currentTheme);
+applyFont(currentFont);
+setLang(currentLang);
+updateQuality(document.getElementById('quality-slider'));
+updateWMPreview();
+updatePipeQuality(document.getElementById('pipe-quality-slider'));
+updatePipeWM();
+document.addEventListener('click',e=>{if(!document.getElementById('font-picker').contains(e.target))document.getElementById('font-dropdown').classList.remove('open');});
+document.querySelectorAll('.drop-zone,.sidebar-upload-area').forEach(dz=>{dz.addEventListener('dragover',()=>dz.classList.add('drag-over'));dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));dz.addEventListener('drop',()=>dz.classList.remove('drag-over'));});
+</script>
+</body>
+</html>
