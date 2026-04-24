@@ -481,13 +481,68 @@ header {
 ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
 /* Responsive */
-@media (max-width:640px) {
-  .sidebar { width: 180px; }
+/* ===== MOBILE DRAWER ===== */
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 150;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity .25s;
+}
+.sidebar-overlay.show { display: block; opacity: 1; }
+
+.hamburger {
+  display: none;
+  width: 36px; height: 36px;
+  align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg3);
+  cursor: pointer; font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.sidebar-close {
+  display: none;
+  position: absolute; top: 10px; right: 10px;
+  width: 28px; height: 28px;
+  align-items: center; justify-content: center;
+  border: none; border-radius: 6px;
+  background: var(--bg4); color: var(--text2);
+  cursor: pointer; font-size: 1rem;
+  z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .sidebar { width: 200px; }
   .main { padding: 16px; }
   .sig-grid { grid-template-columns: 1fr; }
 }
-@media (max-width:480px) {
-  .sidebar { display: none; }
+
+@media (max-width: 520px) {
+  .hamburger { display: flex; }
+  .sidebar-close { display: flex; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 160;
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform .28s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(0,0,0,.4);
+    overflow-y: auto;
+    padding-top: 48px;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .app { display: block; }
+  .main { padding: 16px; min-height: calc(100vh - 54px); }
+
+  /* Compact header on mobile */
+  .font-picker-btn span:last-child { display: none; }
+  .logo-badge { display: none; }
 }
 </style>
 <style>
@@ -579,8 +634,12 @@ header {
 <body class="font-jakarta">
 
 <!-- ===== HEADER ===== -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <header>
-  <div class="logo">Pedef <span class="logo-badge">PDF</span></div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+    <div class="logo">Pedef <span class="logo-badge">PDF</span></div>
+  </div>
   <div class="header-controls">
     <div class="font-picker" id="font-picker">
       <button class="font-picker-btn" onclick="toggleFontDropdown()">
@@ -605,7 +664,8 @@ header {
 <div class="app">
 
 <!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
+  <button class="sidebar-close" onclick="closeSidebar()">✕</button>
 
   <!-- Mode tabs -->
   <div class="mode-tabs">
@@ -1442,7 +1502,7 @@ function renderPipeQueuePreview(){
 }
 
 // ===================== PIPELINE: START =====================
-async function startPipeline(){
+async function startPipeline(){ if(window.innerWidth<=520) closeSidebar();
   if(!mainFile){toast(tr('err_no_file'),'error');return;}
   pipeQueue=PIPE_ORDER.filter(t=>pipeSelected.has(t));
   if(!pipeQueue.length){toast(tr('err_no_tools'),'error');return;}
@@ -1617,6 +1677,23 @@ updatePipeQuality(document.getElementById('pipe-quality-slider'));
 updatePipeWM();
 document.addEventListener('click',e=>{if(!document.getElementById('font-picker').contains(e.target))document.getElementById('font-dropdown').classList.remove('open');});
 document.querySelectorAll('.drop-zone,.sidebar-upload-area').forEach(dz=>{dz.addEventListener('dragover',()=>dz.classList.add('drag-over'));dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));dz.addEventListener('drop',()=>dz.classList.remove('drag-over'));});
+
+// ===== MOBILE DRAWER =====
+function toggleSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+// Auto-close sidebar on tool select (mobile)
+// Single mode: close on tool click. Pipeline mode: only close on "Mulai Pipeline"
+document.querySelectorAll('.tool-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{ if(window.innerWidth<=520) closeSidebar(); });
+});
 </script>
 </body>
 </html>
