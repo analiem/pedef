@@ -509,28 +509,28 @@ header {
 }
 .mode-tab.active { background: var(--accent); color: #fff; }
 
-/* Pipeline tool picker */
-.pipe-tool-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 8px; margin-bottom: 16px;
-}
+/* Pipeline tool picker — single column list */
 .pipe-tool-card {
-  display: flex; align-items: center; gap: 8px;
-  padding: 10px 12px;
-  background: var(--bg3); border: 2px solid var(--border);
-  border-radius: 9px; cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; width: 100%;
+  background: transparent; border: none; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: all .15s;
   font-family: inherit; font-size: .82rem; font-weight: 600;
   color: var(--text2); text-align: left;
 }
-.pipe-tool-card:hover { border-color: var(--border2); color: var(--text); }
-.pipe-tool-card.selected {
-  border-color: var(--accent); color: var(--accent);
-  background: var(--accentbg);
-}
+.pipe-tool-card:last-of-type { border-bottom: none; }
+.pipe-tool-card:hover { color: var(--text); background: var(--bg4); }
+.pipe-tool-card.selected { color: var(--accent); background: var(--accentbg); }
 .pipe-tool-card .ptc-check {
-  margin-left: auto; font-size: .9rem; opacity: 0;
+  margin-left: auto; flex-shrink: 0;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border2); border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; color: #fff; background: transparent;
+  transition: all .15s;
 }
-.pipe-tool-card.selected .ptc-check { opacity: 1; }
+.pipe-tool-card.selected .ptc-check { background: var(--accent); border-color: var(--accent); }
+.pipe-tool-card.selected .ptc-check::after { content: '✓'; }
 
 /* Pipeline queue */
 .pipe-queue {
@@ -629,18 +629,16 @@ header {
   <!-- PIPELINE MODE tool picker in sidebar -->
   <div id="pipeline-tools" style="display:none">
     <div class="sidebar-section-label" data-i="pipe_pick_label">Pilih Tools</div>
-    <div style="padding:0 12px">
-      <div class="pipe-tool-grid">
-        <button class="pipe-tool-card" id="ptc-merge" onclick="togglePipeTool('merge')"><span>🔗</span><span data-i="tab_merge">Gabung</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-compress" onclick="togglePipeTool('compress')"><span>🗜️</span><span data-i="tab_compress">Kompres</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-delete" onclick="togglePipeTool('delete')"><span>🗑️</span><span data-i="tab_delete">Hapus</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-reorder" onclick="togglePipeTool('reorder')"><span>↕️</span><span data-i="tab_reorder">Urutan</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-rotate" onclick="togglePipeTool('rotate')"><span>🔄</span><span data-i="tab_rotate">Putar</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-split" onclick="togglePipeTool('split')"><span>✂️</span><span data-i="tab_split">Pisah</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-watermark" onclick="togglePipeTool('watermark')"><span>💧</span><span data-i="tab_watermark">Watermark</span><span class="ptc-check">✓</span></button>
-        <button class="pipe-tool-card" id="ptc-signature" onclick="togglePipeTool('signature')"><span>✍️</span><span data-i="tab_signature">TTD</span><span class="ptc-check">✓</span></button>
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:8px" onclick="startPipeline()" data-i="btn_start_pipeline">Mulai Pipeline ▶</button>
+    <button class="pipe-tool-card" id="ptc-merge" onclick="togglePipeTool('merge')"><span>🔗</span><span data-i="tab_merge">Gabung</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-compress" onclick="togglePipeTool('compress')"><span>🗜️</span><span data-i="tab_compress">Kompres</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-delete" onclick="togglePipeTool('delete')"><span>🗑️</span><span data-i="tab_delete">Hapus Halaman</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-reorder" onclick="togglePipeTool('reorder')"><span>↕️</span><span data-i="tab_reorder">Atur Urutan</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-rotate" onclick="togglePipeTool('rotate')"><span>🔄</span><span data-i="tab_rotate">Putar</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-split" onclick="togglePipeTool('split')"><span>✂️</span><span data-i="tab_split">Pisah</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-watermark" onclick="togglePipeTool('watermark')"><span>💧</span><span data-i="tab_watermark">Watermark</span><span class="ptc-check"></span></button>
+    <button class="pipe-tool-card" id="ptc-signature" onclick="togglePipeTool('signature')"><span>✍️</span><span data-i="tab_signature">Tanda Tangan</span><span class="ptc-check"></span></button>
+    <div style="padding:10px 12px 4px">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="startPipeline()" data-i="btn_start_pipeline">Mulai Pipeline ▶</button>
     </div>
   </div>
 
@@ -1039,6 +1037,10 @@ header {
 
 </main>
 </div><!-- /app -->
+
+<footer style="text-align:center;padding:14px 24px;font-size:.72rem;color:var(--text2);border-top:1px solid var(--border);font-family:var(--ffmono);letter-spacing:.3px;">
+  © 2026 · Dibuat oleh <strong style="color:var(--accent2)">Samuel Lana</strong> · Semua pemrosesan dilakukan lokal di browser, tidak ada file yang diunggah.
+</footer>
 
 <div class="toast-container" id="toast-container"></div>
 <script>
